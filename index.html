@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Scrolls of the Apprentice : Be a Wizard." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Scrolls of the Apprentice</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/benchristel/scrolls">View on GitHub</a>
+
+          <h1 id="project_title">Scrolls of the Apprentice</h1>
+          <h2 id="project_tagline">Be a Wizard.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/benchristel/scrolls/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/benchristel/scrolls/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="scrolls-of-the-apprentice" class="anchor" href="#scrolls-of-the-apprentice"><span class="octicon octicon-link"></span></a>Scrolls of the Apprentice</h1>
+
+<h2>
+<a name="lorem-ipsum" class="anchor" href="#lorem-ipsum"><span class="octicon octicon-link"></span></a>Lorem Ipsum</h2>
+
+<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p>
+
+<blockquote>
+<p>Neque porro quisquam est, qui <strong>dolorem ipsum quia dolor sit amet</strong>, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. </p>
+</blockquote>
+
+<p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?</p>
+
+<h2>
+<a name="writing-your-first-javascript-program" class="anchor" href="#writing-your-first-javascript-program"><span class="octicon octicon-link"></span></a>Writing your first JavaScript program</h2>
+
+<h3>
+<a name="1-get-a-code-editor" class="anchor" href="#1-get-a-code-editor"><span class="octicon octicon-link"></span></a>1. Get a code editor</h3>
+
+<p>If you want to write more than a few lines of JavaScript, you're going to need software that's designed for editing code files. Word processors (Microsoft Word or Apple Pages) won't work for writing code, because they can't save files in the right format. Bare-bones text editors like TextEdit are okay, but lack useful features like syntax checking.</p>
+
+<p><a href="http://www.activestate.com/komodo-edit/downloads">Komodo Edit</a> is a good code editor that's available for free for Mac, Windows, and Linux. I recommend downloading it and using it for the projects in this book.</p>
+
+<h3>
+<a name="2-download-the-example-file" class="anchor" href="#2-download-the-example-file"><span class="octicon octicon-link"></span></a>2. Download the example file</h3>
+
+<p>Once you've done that, download <a href="">this example file</a>, which contains everything you need to start haxxing teh codez. Open it in both your editor and web browser (Command-O opens files in both Chrome and Komodo Edit).</p>
+
+<h3>
+<a name="3-test-out-the-example-in-the-browser" class="anchor" href="#3-test-out-the-example-in-the-browser"><span class="octicon octicon-link"></span></a>3. Test out the example in the browser</h3>
+
+<p>When you open the example file in the browser, you'll just see a blank page. Let's open up the JavaScript Console (by pressing <code>option+command+J</code>) and test out a few commands.</p>
+
+<p>The example file includes Thrax, a set of tools for creating user interfaces. Try out this command in the console:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">Thrax</span><span class="p">.</span><span class="nx">createButton</span><span class="p">();</span>
+</pre></div>
+
+<p>You'll see the button appear in the top-left corner of the screen. Unfortunately, we can't make this button do anything now because we didn't give it a name when we created it. If something in JavaScript doesn't have a name, there's no way we can refer to it, and thus no way to control it. Let's start over.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">Thrax</span><span class="p">.</span><span class="nx">clearScreen</span><span class="p">();</span>
+</pre></div>
+
+<p>Now we can create another button and give it a name.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">myButton</span> <span class="o">=</span> <span class="nx">Thrax</span><span class="p">.</span><span class="nx">createButton</span><span class="p">();</span>
+</pre></div>
+
+<p>I've chosen to call this button <code>myButton</code>, but the name is arbitrary; we could have called it <code>b</code> or <code>fooBar</code> or <code>qwer_1234</code>. A name (or <em>identifier</em>) in JavaScript can contain letters, numbers, underscores (<code>_</code>) and dollar signs, so if you wanted to, you could name your button <code>O_o</code> or <code>$$$</code>.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Scrolls of the Apprentice maintained by <a href="https://github.com/benchristel">benchristel</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
