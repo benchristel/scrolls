@@ -1,0 +1,10 @@
+# Site settings
+title: Scrolls of the Apprentice
+email: ''
+description: "Be a Wizard."
+baseurl: ""
+url: "http://benchristel.github.io/scrolls"
+
+# Build settings
+markdown: redcarpet
+permalink: pretty

@@ -1,98 +1,75 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Scrolls of the Apprentice : Be a Wizard." />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Welcome!</title>
+    <meta name="viewport" content="width=device-width">
+    <meta name="description" content="Be a Wizard.">
+    <link rel="canonical" href="http://benchristel.github.io/scrolls/">
+    <link rel="stylesheet" href="/css/stylesheet.css">
+    <link rel="stylesheet" href="/css/pygment_trac.css">
+</head>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Scrolls of the Apprentice</title>
-  </head>
 
   <body>
-
-    <!-- HEADER -->
     <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/benchristel/scrolls">View on GitHub</a>
+    <header class="inner">
+      <h1 id="project_title"><a class="site-title" href="/">Scrolls of the Apprentice</a></h1>
+      <h2 id="project_tagline">Be a Wizard.</h2>
+    </header>
+</div>
 
-          <h1 id="project_title">Scrolls of the Apprentice</h1>
-          <h2 id="project_tagline">Be a Wizard.</h2>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/benchristel/scrolls/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/benchristel/scrolls/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>
-<a name="scrolls-of-the-apprentice" class="anchor" href="#scrolls-of-the-apprentice"><span class="octicon octicon-link"></span></a>Scrolls of the Apprentice</h1>
+        <div class="post">
 
-<h2>
-<a name="lorem-ipsum" class="anchor" href="#lorem-ipsum"><span class="octicon octicon-link"></span></a>Lorem Ipsum</h2>
+  <header class="post-header">
+    <h1>Welcome!</h1>
+  </header>
 
-<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p>
+  <article class="post-content">
+  <p><em>Scrolls of the Apprentice</em> aims to teach wizardly computer programming to complete beginners. You&#39;ll learn the basics of <strong>JavaScript</strong>, the language that underlies almost every website in the Universe, and before long, you&#39;ll be creating games like <a href="demo">this</a> and writing scary stuff like this:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">$</span><span class="p">.</span><span class="nx">forAll</span><span class="p">(</span><span class="nx">enemies</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">enemy</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">smite</span><span class="p">(</span><span class="nx">enemy</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">enemy</span><span class="p">.</span><span class="nx">hp</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Victory over &quot;</span><span class="o">+</span><span class="nx">enemy</span><span class="p">.</span><span class="nx">name</span><span class="o">+</span><span class="s2">&quot;!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<h2>What you&#39;ll need</h2>
 
-<blockquote>
-<p>Neque porro quisquam est, qui <strong>dolorem ipsum quia dolor sit amet</strong>, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. </p>
-</blockquote>
+<p>In order to follow along with the programming projects in this book, you&#39;ll need a Mac, Windows, or Linux computer with an up-to-date version of <a href="http://google.com/chrome/browser">Google Chrome</a>. Other web browsers (Firefox, Safari, Opera, Internet Explorer) also have the code-editing and debugging tools you&#39;ll need to do the projects, but their interfaces are all different. For the sake of simplicity and cross-platform compatibility, the screenshots in this book will be taken from Chrome.</p>
 
-<p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?</p>
+<p>You&#39;ll also want a code editing program like <a href="http://www.activestate.com/komodo-edit/downloads">Komodo Edit</a> (available for free for Mac, Windows, and Linux). Word processors like Microsoft Word or Apple Pages aren&#39;t suitable for writing code&mdash;they have features like formatting and grammar-checking that are, at best, useless for coding, and at worst will cause your program not to work.</p>
 
-<h2>
-<a name="writing-your-first-javascript-program" class="anchor" href="#writing-your-first-javascript-program"><span class="octicon octicon-link"></span></a>Writing your first JavaScript program</h2>
+<p>I&#39;ll assume you know how to download files from the Web, find them in your system, and open them in various applications. You should also be able to <em>right-click</em> things. If you&#39;re on a Windows machine, you almost certainly have a two-button mouse or trackpad, so right-clicking just means clicking with the rightmost button on your mouse. If you have a Mac with a one-button mouse or trackpad, you can simulate a right-click by clicking while holding down the <code>control</code> key.</p>
 
-<h3>
-<a name="1-get-a-code-editor" class="anchor" href="#1-get-a-code-editor"><span class="octicon octicon-link"></span></a>1. Get a code editor</h3>
+<h2>FAQ</h2>
 
-<p>If you want to write more than a few lines of JavaScript, you're going to need software that's designed for editing code files. Word processors (Microsoft Word or Apple Pages) won't work for writing code, because they can't save files in the right format. Bare-bones text editors like TextEdit are okay, but lack useful features like syntax checking.</p>
+<h3>Why &quot;Scrolls&quot;?</h3>
 
-<p><a href="http://www.activestate.com/komodo-edit/downloads">Komodo Edit</a> is a good code editor that's available for free for Mac, Windows, and Linux. I recommend downloading it and using it for the projects in this book.</p>
+<p>Anything with a <em>scrollbar</em> can (should?) be called a <em>scroll</em>.</p>
 
-<h3>
-<a name="2-download-the-example-file" class="anchor" href="#2-download-the-example-file"><span class="octicon octicon-link"></span></a>2. Download the example file</h3>
+<h3>My program doesn&#39;t work the way I want. What&#39;s up with that?</h3>
 
-<p>Once you've done that, download <a href="">this example file</a>, which contains everything you need to start haxxing teh codez. Open it in both your editor and web browser (Command-O opens files in both Chrome and Komodo Edit).</p>
+<p>If you&#39;ve got a difficult bug, see the <a href="fixme">troubleshooting guide</a>. Common sources of problems (and tips for debugging) are covered there.</p>
 
-<h3>
-<a name="3-test-out-the-example-in-the-browser" class="anchor" href="#3-test-out-the-example-in-the-browser"><span class="octicon octicon-link"></span></a>3. Test out the example in the browser</h3>
+<h3>I found a bug in your code. Where do I report it?</h3>
 
-<p>When you open the example file in the browser, you'll just see a blank page. Let's open up the JavaScript Console (by pressing <code>option+command+J</code>) and test out a few commands.</p>
+  </article>
 
-<p>The example file includes Thrax, a set of tools for creating user interfaces. Try out this command in the console:</p>
-
-<div class="highlight highlight-javascript"><pre><span class="nx">Thrax</span><span class="p">.</span><span class="nx">createButton</span><span class="p">();</span>
-</pre></div>
-
-<p>You'll see the button appear in the top-left corner of the screen. Unfortunately, we can't make this button do anything now because we didn't give it a name when we created it. If something in JavaScript doesn't have a name, there's no way we can refer to it, and thus no way to control it. Let's start over.</p>
-
-<div class="highlight highlight-javascript"><pre><span class="nx">Thrax</span><span class="p">.</span><span class="nx">clearScreen</span><span class="p">();</span>
-</pre></div>
-
-<p>Now we can create another button and give it a name.</p>
-
-<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">myButton</span> <span class="o">=</span> <span class="nx">Thrax</span><span class="p">.</span><span class="nx">createButton</span><span class="p">();</span>
-</pre></div>
-
-<p>I've chosen to call this button <code>myButton</code>, but the name is arbitrary; we could have called it <code>b</code> or <code>fooBar</code> or <code>qwer_1234</code>. A name (or <em>identifier</em>) in JavaScript can contain letters, numbers, underscores (<code>_</code>) and dollar signs, so if you wanted to, you could name your button <code>O_o</code> or <code>$$$</code>.</p>
+</div>
       </section>
     </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Scrolls of the Apprentice maintained by <a href="https://github.com/benchristel">benchristel</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
     
+    <div id="footer_wrap" class="outer">
+  <footer class="inner">
+    <p class="copyright">Scrolls of the Apprentice is maintained by <a href="https://github.com/benchristel">benchristel</a>.</p>
+    <p>Published with <a href="http://pages.github.com">GitHub Pages</a>.</p>
+  </footer>
+</div>
 
   </body>
 </html>
