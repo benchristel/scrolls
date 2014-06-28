@@ -2,8 +2,8 @@
 title: Scrolls of the Apprentice
 email: ''
 description: "Be a Wizard."
-baseurl: ""
-url: "http://benchristel.github.io/scrolls"
+baseurl: "/scrolls"
+url: "http://benchristel.github.io"
 
 # Build settings
 markdown: redcarpet
