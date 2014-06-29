@@ -1,7 +1,0 @@
----
-layout: page
-title: Test Page One
-permalink: /test1/
----
-
-This just exists to test out the navbar formatting.

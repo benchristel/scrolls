@@ -1,6 +1,7 @@
 ---
 layout: page
 title: Welcome!
+linktext: Home
 permalink: /
 ---
 
