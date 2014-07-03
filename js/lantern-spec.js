@@ -501,4 +501,45 @@ describe('Lantern', function() {
             expect(called).toBe(2)
         })
     })
+    
+    describe(".swear", function() {
+        it("promises to do a thing once resolve() is called", function() {
+            var done = false
+            var doAThing = function() { done = true }
+            var oath = $.swear().to(doAThing)
+            expect(done).toBe(false)
+            oath.resolve()
+            expect(done).toBe(true)
+        })
+        
+        it("does things immediately if resolve() has already been called", function() {
+            var done = false
+            var doAThing = function() { done = true }
+            var oath = $.swear()
+            oath.resolve()
+            expect(done).toBe(false)
+            oath.to(doAThing)
+            expect(done).toBe(true)
+        })
+        
+        it("queues multiple promises and resolves them in order", function() {
+            var done = []
+            var doOne = function() { done.push(1) }
+            var doTwo = function() { done.push(2) }
+            var oath = $.swear().to(doOne).and(doTwo)
+            expect(done).toEqual([])
+            oath.resolve()
+            expect(done).toEqual([1,2])    
+        })
+        
+        it("calls queued callbacks at most once if resolve() is called multiple times", function() {
+            var done = []
+            var doOne = function() { done.push(1) }
+            var oath = $.swear().to(doOne)
+            expect(done).toEqual([])
+            oath.resolve()
+            oath.resolve()
+            expect(done).toEqual([1])    
+        })
+    })
 })

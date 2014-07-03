@@ -4,11 +4,7 @@ linktext: Workbench
 permalink: /workbench/
 ---
 <!DOCTYPE html>
-<html>
-<head>
-<title>Workbench of the Apprentice</title>
-<script type="text/javascript", src="{{ site.baseurl }}/js/lantern.js"></script>
-<script type="text/javascript">
+<html><head><title>Workbench of the Apprentice</title><script type="text/javascript", src="{{ site.baseurl }}/js/lantern.js"></script><script type="text/javascript">
 
 "use strict"
 
@@ -16,17 +12,14 @@ permalink: /workbench/
 //    be ignored by the computer. Comments are great for leaving reminders
 //    for yourself, or explaining your code to other people.
 //
-//    You can delete all these comments if you like, or just add your
-//    JavaScript code below.
+//    Delete the JavaScript code below and replace it with your own! You can
+//    also get rid of this comment, if you like.
 
-
-
+var welcomeMessage = $.createTextDisplay()
+welcomeMessage.width = 800
+welcomeMessage.text = 'This is the Lantern workbench. You can get rid of this message by calling $.clearScreen() in the JavaScript console.'
 
 
 //    Don't put code after the /script tag below this comment. This tag signals
 //    the end of the JavaScript code, so code placed below it won't work.
-</script>
-</head>
-<body>
-</body>
-</html>
+</script></head><body></body></html>

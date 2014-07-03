@@ -353,6 +353,30 @@ var Lantern = (function (undefined) {
           _.resetTurtle()
           _.removeAllElementsFromDom()
         }
+    
+    // Other Utilities
+    , swear: function() {
+        var resolved = false, queued = []
+        var oath =
+        { to: function(fn) {
+            if (resolved) {
+              $.call(fn)
+            } else {
+              queued.push(fn)
+            }
+            return oath
+          }
+        , resolve: function() {
+            resolved = true
+            $.forAll(queued, function(fn) { $.call(fn) })
+            $.clear(queued)
+            return oath
+          }
+        }
+        oath.and = oath.to
+        return oath
+      }
+    
     }
   )
   
@@ -424,12 +448,19 @@ var Lantern = (function (undefined) {
             }
           }
           
+          var promises = []
+          var received = {}
+          
           d.receiveEvent = function(eventName, rawData) {
             var cb = d.registeredCallbacks[eventName]
             var data = d.process(rawData)
+            received[eventName] = true
             if ($.isArray(cb)) {
               $.forAll(cb, function(c) { $.call(c, [data]) })
             }
+            $.forAll(promises, function(promise) {
+              promise.oath.resolve()
+            })
           }
           
           d.process = $.identity
@@ -451,6 +482,27 @@ var Lantern = (function (undefined) {
                 throw "Can't register event handler for "+eventName+": "+handlers
               }
             })
+          }
+          
+          d.once = function(blockers, callback) {
+            blockers = $.copy(blockers)
+            var fn = function() {
+              if (blockers.length === 0) {
+                $.call(callback, arguments)
+              } else {
+                fn.callQueue.push(arguments)
+              }
+            }
+            
+            fn.resolve = function(evt) {
+              $.remove(evt, blockers)
+              if (blockers.length === 0 && fn.callQueue.length > 0) {
+                $.forAll(fn.callQueue, function(args) { $.call(callback, args) })
+                $.clear(fn.callQueue)
+              }
+            }
+            
+            return fn
           }
           
           d.unregister = function(handlerMapping) {
@@ -494,19 +546,29 @@ var Lantern = (function (undefined) {
           
           d.registeredCallbacks = {}
           
-          $.addProperties(host, {receiveEvent: d.receiveEvent}, {writable: false})
+          $.addProperties(host,
+            { receiveEvent: d.receiveEvent
+            , subscribeTo: d.register
+            }
+          , {writable: false}
+          )
           
           return d
         }
+    , nextId: 0
+    , generateHtmlId: function(prefix) {
+        prefix = $.init(prefix, 'lantern-element-')
+        return String(prefix) + _.nextId++
+      }
     , createUiElement:
-        function(params) {
+        function(params, extender) {
           params = $.init(params, {})
-          var secret = {}
+          var secret = $.init(secret, {})
           var ui = {}
           
           secret.domElement = _.addElement(params.tag)
           
-          var dispatch = _.addEventDispatcher(ui)
+          var dispatch = secret.dispatch = _.addEventDispatcher(ui)
           
           $.addProperties(ui,
             { whenClicked:             dispatch.registrar('clicked')
@@ -530,7 +592,8 @@ var Lantern = (function (undefined) {
           }
           
           $.addProperties(ui,
-            { top:  _.turtleY
+            { id:   _.generateHtmlId()
+            , top:  _.turtleY
             , left: _.turtleX
             , height: 50
             , width:  100
@@ -572,7 +635,8 @@ var Lantern = (function (undefined) {
           
           secret.htmlAttributes = function () {
             return {
-              style: secret.toCss()
+              style: secret.toCss(),
+              id: ui.id
             }
           }
           
@@ -598,6 +662,8 @@ var Lantern = (function (undefined) {
             return css
           }
           
+          $.call(extender, [ui, secret])
+          
           ui.redraw()
           
           $.seal(ui)
@@ -616,6 +682,46 @@ var Lantern = (function (undefined) {
   
   $.createTextDisplay = function() {
     var self = _.createUiElement({tag: 'div'})
+    
+    return self
+  }
+  
+  $.createYoutubeVideo = function(permalink) {
+    _.requireYoutubeApi()
+    
+    var self = _.createUiElement({tag: 'iframe'}, function(self, secret) {
+      
+      var el = secret.domElement
+      
+      el.onreadystatechange = function() {
+        if (el.readyState === 'complete') {
+          secret.dispatch('ready')
+        }
+      }
+      
+      var apiPlayer = new YT.player(self.id, {
+        events: {
+          
+        }
+      })
+      
+      $.extend(secret, 'htmlAttributes', function(attrs) {
+        return $.merge(attrs, {
+          width:  self.width,
+          height: self.height,
+          src:    "http://www.youtube.com/embed/"+self.permalink,
+          frameborder: "0"
+        })
+      })
+      
+      self.play = secret.dispatch.once('youtubeApiLoaded', 'loaded', function() {
+        player.playVideo()
+      })
+      
+      self.permalink = permalink
+      self.width = 420
+      self.height = 315
+    })
     
     return self
   }
