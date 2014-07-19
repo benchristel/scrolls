@@ -26,6 +26,25 @@ describe('Lantern', function() {
         expect($).toEqual(Lantern)
     })
 
+    describe(".additions", function() {
+        it("lets me add a .myStuff property and access it with $.myStuff", function() {
+            expect($.myStuff).toBe(undefined)
+            $.additions.myStuff = "shtoo"
+            expect($.myStuff).toEqual("shtoo")
+        })
+
+        it("but I can't add stuff directly to Lantern", function() {
+            var caught
+            try {
+                $.haha = 'no'
+            } catch(e) {
+                caught = e
+            }
+            expect($.haha).toBe(undefined)
+            expect(caught).not.toBe(undefined)
+        })
+    })
+
     describe(".given", function() {
         it("returns true when passed (1)", function() {
             expect($.given(1)).toBe(true)
@@ -620,4 +639,6 @@ describe('Lantern', function() {
             expect(x.top).toEqual(100)
         })
     })
+
+
 })
