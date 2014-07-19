@@ -594,6 +594,22 @@ var Lantern = (function (undefined) {
             _.turtleY += 50
           }
 
+          ui.centerHorizontallyOn = function(other) {
+            ui.left = other.left + other.width / 2 - ui.width / 2
+          }
+
+          ui.centerVerticallyOn = function(other) {
+            ui.top = other.top + other.height / 2 - ui.height / 2
+          }
+
+          ui.putAbove = function(other, spacing) {
+            ui.top = other.top - ui.height - $.init(spacing, 0)
+          }
+
+          ui.putBelow = function(other, spacing) {
+            ui.top = other.top + other.height + $.init(spacing, 0)
+          }
+
           ui.redraw = function () {
             secret.setText(ui.text)
             secret.setAttributes(secret.htmlAttributes())
