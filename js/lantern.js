@@ -3,7 +3,7 @@
 var Lantern = (function (undefined) {
   var $ = {} // the Lantern zygote
   var _ = {} // container for private properties
-  
+
   var eachProperty = function(obj, fn) {
     for(var k in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, k)) {
@@ -11,32 +11,32 @@ var Lantern = (function (undefined) {
       }
     }
   }
-  
+
   var $public = function (properties) {
     eachProperty(properties, function(k, v) {
       $[k] = v
     })
   }
-  
+
   var $publicConst = function (properties) {
     eachProperty(properties, function(k, v) {
       Object.defineProperty($, k, {writable: false, value: v})
     })
   }
-  
+
   var $private = function (properties) {
     eachProperty(properties, function(k, v) {
       _[k] = v
     })
   }
-  
+
   $public(
     { framesPerSecond: 60
     , screen: null // the DOM element where Lantern controls will be placed
                    // TODO: shouldn't this be private?
     }
   )
-  
+
   $publicConst(
     { COLOR:
         { black: '#000'
@@ -51,7 +51,7 @@ var Lantern = (function (undefined) {
         , cyan:    '#0ff'
         , magenta: '#f0f'
         }
-    
+
     // Value definition
     , given:
         function(val) { return val !== undefined }
@@ -61,13 +61,13 @@ var Lantern = (function (undefined) {
         function(val, _default) {
           return $.given(val) ? val : _default
         }
-    
+
     // Barely-useful utility functions
     , noOp:
         function() {}
     , identity:
         function(x) { return x }
-    
+
     // Type-checking functions
     , isFunction:
         function(thing) { return typeof(thing) === 'function' }
@@ -77,7 +77,7 @@ var Lantern = (function (undefined) {
         function(thing) { return thing instanceof Object }
     , isNumber:
         function(thing) { return (+thing === thing) }
-        
+
     // Conversion
     , toNumericString:
         function(thing) {
@@ -91,7 +91,7 @@ var Lantern = (function (undefined) {
           }).join("")
         }
     , htmlEscape:
-        function(s) { 
+        function(s) {
           return String(s)
               .replace(/&/g, '&amp;')
               .replace(/"/g, '&quot;')
@@ -106,7 +106,7 @@ var Lantern = (function (undefined) {
               .replace(/&quot;/g, '"')
               .replace(/&amp;/g,  '&')
         }
-    
+
     // Array utility functions
     , forAll:
         function(array, fn) {
@@ -143,29 +143,29 @@ var Lantern = (function (undefined) {
         })
         return sum
       }
-      
+
     , firstOf: function(array) {
         return array[0]
       }
-      
+
     , restOf: function(array, start) {
         // TODO: rename or alias to allButFirst()? e.g. allButFirst(2, args)
         start = $.init(start, 1)
         return Array.prototype.slice.call(arguments, [start, array.length])
       }
-      
+
     , lastOf: function(array) {
         return array[array.length-1]
       }
-      
+
     , drawFirst: function(deck) {
         return deck.shift()
       }
-      
+
     , drawLast: function(deck) {
         return deck.pop()
       }
-      
+
     , rotated: function(array, numPositions) {
         numPositions = $.init(numPositions, 1)
         sliceIndex = (array.length - numPositions) % array.length
@@ -174,12 +174,12 @@ var Lantern = (function (undefined) {
         var end = array.slice(sliceIndex, array.length)
         return end.concat(beginning)
       }
-      
+
     , rotate: function(array, numPositions) {
         $.replace(array, $.rotated(array, numPositions))
         return array
       }
-      
+
     , repeat: function(nTimes, fn) {
         fn = $.init(fn, $.identity)
         var count = 0
@@ -187,18 +187,18 @@ var Lantern = (function (undefined) {
           fn(count++)
         }
       }
-      
+
     , generate: function(n, fn) {
         var generated = new Array(n)
         $.repeat(n, function(i) { generated[i] = fn() })
         return generated
       }
-        
+
     , cut: function(array) {
         var middle = Math.floor(array.length / 2)
         return [array.slice(0,middle), array.slice(middle, array.length)]
       }
-      
+
     , remove: function(item, array) {
         for (var i = array.length-1; i >= 0; i--) {
           if (array[i] === item) {
@@ -207,12 +207,12 @@ var Lantern = (function (undefined) {
         }
         return array
       }
-      
+
     , clear: function(array) {
         array.length = 0
         return array
       }
-    
+
     // Object utility functions
     , forAllPropertiesOf:
         function(object, fn) {
@@ -238,7 +238,7 @@ var Lantern = (function (undefined) {
           })
           return obj1
         }
-    
+
     // Randomness
     , rollD:
         function(sides) {
@@ -280,7 +280,7 @@ var Lantern = (function (undefined) {
           }
           return $.replace(array, scrambled)
         }
-    
+
     // Function utilities
     , call:
         function(fn, args, thisVal) {
@@ -340,20 +340,20 @@ var Lantern = (function (undefined) {
         }
     , seal:
         function(obj) { return Object.seal(obj) }
-    
+
     // Time
     , now:
         function() { return Number(new Date()) }
     , everySecond:
         function(fn) { return window.setInterval(fn, 1000) }
-    
+
     // UI
     , clearScreen:
         function() {
           _.resetTurtle()
           _.removeAllElementsFromDom()
         }
-    
+
     // Other Utilities
     , swear: function() {
         var resolved = false, queued = []
@@ -376,10 +376,10 @@ var Lantern = (function (undefined) {
         oath.and = oath.to
         return oath
       }
-    
+
     }
   )
-  
+
   $private(
     { turtleX: 0
     , turtleY: 0
@@ -394,7 +394,7 @@ var Lantern = (function (undefined) {
         function(tag, attrs) {
           attrs = $.init(attrs, {})
           var elem = document.createElement(tag || 'div')
-          
+
           for(var attr in attrs) {
             if (attrs.hasOwnProperty(attr)) {
               elem.setAttribute(attr, attrs[attr])
@@ -447,10 +447,10 @@ var Lantern = (function (undefined) {
               d.receiveEvent(eventName, eventData)
             }
           }
-          
+
           var promises = []
           var received = {}
-          
+
           d.receiveEvent = function(eventName, rawData) {
             var cb = d.registeredCallbacks[eventName]
             var data = d.process(rawData)
@@ -462,9 +462,9 @@ var Lantern = (function (undefined) {
               promise.oath.resolve()
             })
           }
-          
+
           d.process = $.identity
-          
+
           d.register = function(handlerMapping) {
             d.unregister(handlerMapping) // prevent handlers from being registered more than once
             $.forAllPropertiesOf(handlerMapping, function(eventName, handlers) {
@@ -483,28 +483,7 @@ var Lantern = (function (undefined) {
               }
             })
           }
-          
-          d.once = function(blockers, callback) {
-            blockers = $.copy(blockers)
-            var fn = function() {
-              if (blockers.length === 0) {
-                $.call(callback, arguments)
-              } else {
-                fn.callQueue.push(arguments)
-              }
-            }
-            
-            fn.resolve = function(evt) {
-              $.remove(evt, blockers)
-              if (blockers.length === 0 && fn.callQueue.length > 0) {
-                $.forAll(fn.callQueue, function(args) { $.call(callback, args) })
-                $.clear(fn.callQueue)
-              }
-            }
-            
-            return fn
-          }
-          
+
           d.unregister = function(handlerMapping) {
             $.forAllPropertiesOf(handlerMapping, function(eventName, handlers) {
               // TODO: $.init(handle.registeredCallbacks, eventName, []) would be cool
@@ -523,36 +502,36 @@ var Lantern = (function (undefined) {
               }
             })
           }
-          
+
           d.registrar = function(eventName) {
             var registrar = function() {
               var map = {}
               map[eventName] = $.forAll(arguments)
               d.register(map)
             }
-            
+
             registrar.doNot = function() {
               var map = {}
               map[eventName] = $.forAll(arguments)
               d.unregister(map)
             }
-            
+
             registrar.doNothing = function() {
               d.registeredCallbacks[eventName] = []
             }
-            
+
             return registrar
           }
-          
+
           d.registeredCallbacks = {}
-          
+
           $.addProperties(host,
             { receiveEvent: d.receiveEvent
             , subscribeTo: d.register
             }
           , {writable: false}
           )
-          
+
           return d
         }
     , nextId: 0
@@ -565,11 +544,11 @@ var Lantern = (function (undefined) {
           params = $.init(params, {})
           var secret = $.init(secret, {})
           var ui = {}
-          
+
           secret.domElement = _.addElement(params.tag)
-          
+
           var dispatch = secret.dispatch = _.addEventDispatcher(ui)
-          
+
           $.addProperties(ui,
             { whenClicked:             dispatch.registrar('clicked')
             , whenMouseEnters:         dispatch.registrar('mouseEnters')
@@ -578,9 +557,9 @@ var Lantern = (function (undefined) {
             , whenKeyPressed:          dispatch.registrar('keyPressed')
             , whenKeyReleased:         dispatch.registrar('keyReleased')
             }
-          , { writable: false } 
+          , { writable: false }
           )
-          
+
           secret.setEventHandlers = function(attrs) {
             var el = secret.domElement
             el.onclick     = dispatch('clicked')
@@ -590,7 +569,7 @@ var Lantern = (function (undefined) {
             el.onkeydown   = dispatch('keyPressed')
             el.onkeyup     = dispatch('keyReleased')
           }
-          
+
           $.addProperties(ui,
             { id:   _.generateHtmlId()
             , top:  _.turtleY
@@ -608,38 +587,38 @@ var Lantern = (function (undefined) {
             , cursor: 'auto'
             , data: {} // this property is not used by Lantern; it's for the user to store their own data
             })
-          
+
           _.turtleX += 100
           if (_.turtleX > 800) {
             _.turtleX = 0
             _.turtleY += 50
           }
-          
+
           ui.redraw = function () {
             secret.setText(ui.text)
             secret.setAttributes(secret.htmlAttributes())
             secret.setEventHandlers()
           }
-          
+
           dispatch.register({propertyChanged: function() { ui.redraw() }})
-          
+
           secret.setText = function(value) {
             secret.domElement.innerHTML = $.htmlEscape(value)
           }
-          
+
           secret.setAttributes = function (attrs) {
             $.forAllPropertiesOf(attrs, function(name, value) {
               secret.domElement.setAttribute(name, value)
             })
           }
-          
+
           secret.htmlAttributes = function () {
             return {
               style: secret.toCss(),
               id: ui.id
             }
           }
-          
+
           secret.toCss = function() { return $.toCss(secret.asCss()) }
           secret.asCss = function() {
             var css =
@@ -661,106 +640,31 @@ var Lantern = (function (undefined) {
               }
             return css
           }
-          
+
           $.call(extender, [ui, secret])
-          
+
           ui.redraw()
-          
+
           $.seal(ui)
           return ui
         }
     }
   )
-  
+
   $.createButton = function() {
     var self = _.createUiElement({tag: 'button'})
-    
+
     self.cursor = 'pointer'
-    
+
     return self
   }
-  
+
   $.createTextDisplay = function() {
     var self = _.createUiElement({tag: 'div'})
-    
+
     return self
   }
-  
-  $.createYoutubeVideo = function(permalink) {
-    _.requireYoutubeApi()
-    
-    var self = _.createUiElement({tag: 'iframe'}, function(self, secret) {
-      
-      var el = secret.domElement
-      
-      el.onreadystatechange = function() {
-        if (el.readyState === 'complete') {
-          secret.dispatch('ready')
-        }
-      }
-      
-      var apiPlayer = new YT.player(self.id, {
-        events: {
-          
-        }
-      })
-      
-      $.extend(secret, 'htmlAttributes', function(attrs) {
-        return $.merge(attrs, {
-          width:  self.width,
-          height: self.height,
-          src:    "http://www.youtube.com/embed/"+self.permalink,
-          frameborder: "0"
-        })
-      })
-      
-      self.play = secret.dispatch.once('youtubeApiLoaded', 'loaded', function() {
-        player.playVideo()
-      })
-      
-      self.permalink = permalink
-      self.width = 420
-      self.height = 315
-    })
-    
-    return self
-  }
-  
-  $.createTicker = function() {
-    var secret = {}
-    var self = {}
-    secret.attr = $.imbueWithAttributes(self, secret)
-    secret.attr('interval', 1)
-    secret.attr('whenTicked', function() {})
-    
-    var started = false
-    var lastTick = 0
-    
-    self.start = function() {
-      started = true
-      lastTick = new Date().getTime()
-      secret.jsInterval = setInterval(
-        function () {
-          var now = new Date().getTime()
-          self.whenTicked()((now - lastTick) / 1000)
-          lastTick = now
-        },
-        self.interval()*1000
-      )
-    }
-    
-    self.stop = function() {
-      started = false
-      clearInterval(secret.jsInterval)
-    }
-    
-    self.started = function() {
-      return started
-    }
-    
-    return self
-  }
-  
+
   // when the screen is set, remove any created UI elements from the old screen
   // and add them to the new one.
   var _screen = function(v) {
@@ -773,24 +677,24 @@ var Lantern = (function (undefined) {
   }
   _screen.d = null
   Object.defineProperty($, 'screen', {set: _screen, get: _screen, configurable: false})
-  
+
   var $dispatch = _.addEventDispatcher($)
-  
+
   $.addProperties($
   , { whenPageLoadFinishes: $dispatch.registrar('pageLoaded')
     , whenKeyPressed:       $dispatch.registrar('keyPressed')
     }
   , { writable: false }
   )
-  
+
   $.extend(window, 'onload', function() {
     var body = document.getElementsByTagName("body")[0]
-    
+
     $.extend(body, 'onkeypress', $dispatch('keyPressed'))
-    
+
     $.screen = body
   })
-  
+
   $.extend(window, 'onload', $dispatch('pageLoaded'))
 
   return $
