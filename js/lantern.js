@@ -10,10 +10,6 @@ var Lantern = (function (undefined) {
 
   $.additions = $additions
 
-  var eachProperty = function(obj, fn) {
-
-  }
-
   var $publicConst = function (properties) {
     eachProperty(properties, function(k, v) {
       Object.defineProperty($, k, {writable: false, value: v})
@@ -206,10 +202,6 @@ var Lantern = (function (undefined) {
 
   $public.merged = function(obj1, obj2) {
     return $.merge($.copy(obj1), obj2)
-    //$.forAllPropertiesOf(obj2, function(k, v) {
-    //  merged[k] = v
-    //})
-    //return merged
   }
 
   $public.merge = function(obj1, obj2) {
@@ -391,25 +383,6 @@ var Lantern = (function (undefined) {
   }
 
   $private.cap = function(s) { return s.charAt(0).toUpperCase()+s.slice(1, s.length) }
-  $private.throttle = function(fn, maxCallsPerSecond) {
-    maxCallsPerSecond = init(maxCallsPerSecond, $.framesPerSecond)
-    var minMillisBetweenCalls = 1000 / maxCallsPerSecond
-    var timeOfLastCall = 0
-    var callFn = function() {
-      timeOfLastCall = $.now()
-      fn()
-    }
-    var throttledFn = function() {
-      var now = $.now()
-      var elapsed = now - timeOfLastCall
-      if (elapsed >= minMillisBetweenCalls) {
-        callFn()
-      } else {
-        setTimeout(callFn, minMillisBetweenCalls - elapsed)
-      }
-    }
-    return throttledFn
-  }
 
   $private.addEventDispatcher = function(host) {
     var d = function(eventName) {
