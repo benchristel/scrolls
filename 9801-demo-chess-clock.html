@@ -1,0 +1,73 @@
+---
+title: Workbench of the Apprentice
+linktext: Workbench
+permalink: /demos/chess-clock/
+---
+<!DOCTYPE html>
+<html><head><title>Workbench of the Apprentice</title><script type="text/javascript", src="{{ site.baseurl }}/js/lantern.js"></script><script type="text/javascript">
+
+"use strict"
+
+var ticker
+var player1Clock = $.createTextInput()
+var player2Clock = $.createTextInput()
+var active = 'player 1'
+
+var startButton = $.createButton()
+startButton.text = 'Start'
+
+var stopButton = $.createButton()
+stopButton.text = 'Stop'
+stopButton.visible = false
+
+var startTimer = function() {
+    startButton.visible = false
+    stopButton.visible = true
+    ticker = $.everySecond(tickTimer)
+}
+
+var stopTimer = function() {
+    startButton.visible = true
+    stopButton.visible = false
+    clearInterval(ticker)
+}
+
+var tickTimer = function() {
+    var secondsLeft
+    if (active === 'player 1') {
+        secondsLeft = Number(player1Clock.text)
+        secondsLeft = secondsLeft - 1
+        if (secondsLeft <= 0) {
+            secondsLeft = 0
+            alert('Player 1 ran out of time!')
+            stopTimer()
+        }
+        player1Clock.text = secondsLeft
+    } else {
+        // player 2 is active
+        secondsLeft = Number(player2Clock.text)
+        secondsLeft = secondsLeft - 1
+        if (secondsLeft <= 0) {
+            secondsLeft = 0
+            alert('Player 2 ran out of time!')
+            stopTimer()
+        }
+        player2Clock.text = secondsLeft
+    }
+}
+
+var switchPlayers = function() {
+    if (active === 'player 1') {
+        active = 'player 2'
+    } else {
+        active = 'player 1'
+    }
+}
+
+startButton.whenClicked(startTimer)
+
+stopButton.whenClicked(stopTimer)
+
+$.whenKeyPressed(switchPlayers)
+
+</script></head><body></body></html>
