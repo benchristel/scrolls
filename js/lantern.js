@@ -417,8 +417,8 @@ var Lantern = (function (undefined) {
           var map = {}
           $.forAll(handlers, function(handler) {
             map[eventName] = handler
-            d.register(map)
           })
+          d.register(map)
         } else if ($.isFunction(handlers)) {
           d.registeredCallbacks[eventName].push(handlers)
         } else {
@@ -484,6 +484,10 @@ var Lantern = (function (undefined) {
     return String(prefix) + _.nextId++
   }
 
+  // ----------- //
+  // UI ELEMENTS //
+  // ----------- //
+
   $private.createUiElement = function(params, extender) {
     params = $.init(params, {})
     var secret = $.init(secret, {})
@@ -500,6 +504,7 @@ var Lantern = (function (undefined) {
       , whenMouseMoves:          dispatch.registrar('mouseMoves')
       , whenKeyPressed:          dispatch.registrar('keyPressed')
       , whenKeyReleased:         dispatch.registrar('keyReleased')
+      , whenInputChanged:        dispatch.registrar('inputChanged')
       }
     , { writable: false }
     )
@@ -511,7 +516,28 @@ var Lantern = (function (undefined) {
       el.onmouseout  = dispatch('mouseLeaves')
       el.onmousemove = dispatch('mouseMoves')
       el.onkeydown   = dispatch('keyPressed')
-      el.onkeyup     = dispatch('keyReleased')
+
+      el.onkeyup = function() {
+        secret.withoutRedrawing(function() {
+          dispatch.receiveEvent('inputMayHaveChanged')
+        })
+        dispatch.receiveEvent('keyReleased')
+        ui.redraw()
+      }
+      el.onchange = function() {
+        secret.withoutRedrawing(function() {
+          dispatch.receiveEvent('inputMayHaveChanged')
+        })
+        dispatch.receiveEvent('changed')
+        ui.redraw()
+      }
+    }
+
+    secret.withoutRedrawing = function(fn) {
+      var old = ui.redraw
+      ui.redraw = $.noOp
+      fn()
+      ui.redraw = old
     }
 
     $.addProperties(ui,
@@ -557,7 +583,7 @@ var Lantern = (function (undefined) {
     ui.redraw = function () {
       secret.setText(ui.text)
       secret.setAttributes(secret.htmlAttributes())
-      secret.setEventHandlers()
+      secret.setEventHandlers() // TODO: is this line needed?
     }
 
     dispatch.register({propertyChanged: function() { ui.redraw() }})
@@ -573,10 +599,10 @@ var Lantern = (function (undefined) {
     }
 
     secret.htmlAttributes = function () {
-      return {
+      return $.merge({
         style: secret.toCss(),
         id: ui.id
-      }
+      }, $.call(secret.htmlAttributes.extension) || {})
     }
 
     secret.toCss = function() { return $.toCss(secret.asCss()) }
@@ -619,6 +645,28 @@ var Lantern = (function (undefined) {
 
   $public.createTextDisplay = function() {
     var self = _.createUiElement({tag: 'div'})
+
+    return self
+  }
+
+  $public.createTextInput = function() {
+    var self = _.createUiElement({tag: 'input'}, function(self, secret) {
+      secret.setText = function(value) {
+        if (secret.domElement.value !== value) {
+          secret.domElement.value = value
+        }
+      }
+
+      var updateTextAttributeFromInput = function() {
+        if (self.text !== secret.domElement.value) {
+          self.text = secret.domElement.value
+          secret.dispatch.receiveEvent('inputChanged')
+        }
+
+      }
+
+      secret.dispatch.register({ inputMayHaveChanged:  updateTextAttributeFromInput})
+    })
 
     return self
   }

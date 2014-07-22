@@ -640,5 +640,14 @@ describe('Lantern', function() {
         })
     })
 
-
+    describe("x.putAbove(y)", function() {
+        it("positions the bottom edge of x at the top of y", function() {
+            var y = $.createButton()
+            y.top = 200
+            var x = $.createButton()
+            x.height = 100
+            x.putAbove(y)
+            expect(x.top).toEqual(100)
+        })
+    })
 })
