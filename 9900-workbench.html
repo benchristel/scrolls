@@ -1,25 +1,18 @@
 ---
-title: Workbench of the Apprentice
-linktext: Workbench
-permalink: /workbench/
+title: Project Template
+linktext: Project Template
+permalink: /template/
 ---
 <!DOCTYPE html>
 <html><head><title>Workbench of the Apprentice</title><script type="text/javascript", src="{{ site.baseurl }}/js/lantern.js"></script><script type="text/javascript">
+$.main = function() { "use strict"
 
-"use strict"
+// Delete the code below and replace it with your own!
+// Lines beginning with two slashes are *comments*. The computer ignores them,
+// but you can use them to leave notes for yourself.
 
-// <- those two slashes make the rest of the line into a *comment*, which will
-//    be ignored by the computer. Comments are great for leaving reminders
-//    for yourself, or explaining your code to other people.
-//
-//    Delete the JavaScript code below and replace it with your own! You can
-//    also get rid of this comment, if you like.
+var winButton = $.createButton()
+winButton.text = 'Win'
+winButton.whenClicked(function() { alert('I bet you can make a better game than this!') })
 
-var welcomeMessage = $.createTextDisplay()
-welcomeMessage.width = 800
-welcomeMessage.text = 'This is the Lantern workbench. You can get rid of this message by calling $.clearScreen() in the JavaScript console.'
-
-
-//    Don't put code after the /script tag below this comment. This tag signals
-//    the end of the JavaScript code, so code placed below it won't work.
-</script></head><body></body></html>
+}</script></head><body></body></html>

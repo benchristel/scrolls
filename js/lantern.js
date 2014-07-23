@@ -320,6 +320,7 @@ var Lantern = (function (undefined) {
   $public.clearScreen = function() {
     _.resetTurtle()
     _.removeAllElementsFromDom()
+    $.clear(_.uiElements)
   }
 
   // Other Utilities
@@ -379,7 +380,6 @@ var Lantern = (function (undefined) {
     $.forAll(_.uiElements, function(elem) {
       $.screen.removeChild(elem)
     })
-    $.clear(_.uiElements)
   }
 
   $private.cap = function(s) { return s.charAt(0).toUpperCase()+s.slice(1, s.length) }
@@ -693,15 +693,21 @@ var Lantern = (function (undefined) {
   , { writable: false }
   )
 
+  $.addProperties($, { main: $.noOp})
+
   $.extend(window, 'onload', function() {
     var body = document.getElementsByTagName("body")[0]
 
     $.extend(body, 'onkeypress', $dispatch('keyPressed'))
 
     $.screen = body
-  })
 
-  $.extend(window, 'onload', $dispatch('pageLoaded'))
+    _.addElementsToDom(_screen.d, _.uiElements)
+
+    $.main()
+
+    $dispatch.receiveEvent('pageLoaded')
+  })
 
   return $
 })()
