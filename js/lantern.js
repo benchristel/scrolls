@@ -1,5 +1,37 @@
 "use strict"
 
+var Lantern2 = (function() {
+  var constructor = function(sub) {
+    return function(params) {
+      var api = {}, internal = {}
+      api.extend = function(extension, params) {
+        var copy = {}, internalCopy = {}, prop
+        for (prop in internal)
+          if (Object.prototype.hasOwnProperty.call(internal, prop)) internalCopy[prop] = internal[prop]
+
+        for(prop in api)
+          if (Object.prototype.hasOwnProperty.call(api, prop)) copy[prop] = api[prop]
+
+        extension.call(null, api, internal, copy, internalCopy, params)
+        return api
+      }
+      return api.extend(sub, params)
+    }
+  }
+
+  return constructor(function($) {
+    $.constructor = constructor
+  })()
+})()
+
+Lantern2.extend(function($, _) {
+  $.test = "it works"
+  $.publicAccessor = function() { return $.test }
+  _.pri = 'seeecrets'
+  $.setter = function(val) { _.pri = val }
+  $.getter = function(val) { return _.pri }
+})
+
 var Lantern = (function (undefined) {
   var $additions = {} // the prototype of Lantern, to which clients can add their own gizmos
 
@@ -476,6 +508,23 @@ var Lantern = (function (undefined) {
     )
 
     return d
+  }
+
+  $public.constructor = function() {
+    var subs = arguments
+    var constructor = function(params) {
+      var api = {}, internal = {}
+      api.extend = function(extension, params) {
+        $.call(extension, [api, internal, params])
+        return api
+      }
+      $.forAll(subs, function(sub) {
+        $.call(sub, [api, internal, params])
+      })
+
+      return api
+    }
+    return constructor
   }
 
   $private.nextId = 0
