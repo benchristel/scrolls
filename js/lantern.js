@@ -1,36 +1,188 @@
 "use strict"
 
-var Lantern2 = (function() {
-  var constructor = function(sub) {
-    return function(params) {
-      var api = {}, internal = {}
-      api.extend = function(extension, params) {
-        var copy = {}, internalCopy = {}, prop
-        for (prop in internal)
-          if (Object.prototype.hasOwnProperty.call(internal, prop)) internalCopy[prop] = internal[prop]
+// KERNEL
 
-        for(prop in api)
-          if (Object.prototype.hasOwnProperty.call(api, prop)) copy[prop] = api[prop]
+var Lantern = (function($) {
+  return ($.createObject = function(base) {
+    var api = base || {},
+        internal = {},
+        methods = function(obj, fn) {
+          for (var k in obj) if (typeof obj[k] === 'function') fn(k)
+        }
 
-        extension.call(null, api, internal, copy, internalCopy, params)
-        return api
+    api.extend = function() {
+      var extension,
+          sup = {},
+          internalSup = {},
+          i
+
+      for(i = 0; i < arguments.length; i++) {
+        extension = arguments[i]
+
+        methods(internal, function(k) {
+          internalSup[k] = internal[k]
+        })
+
+        methods(api, function(k) {
+          sup[k] = api[k]
+        })
+
+        extension.call(null, api, internal, sup, internalSup)
       }
-      return api.extend(sub, params)
+
+      return api
+    }
+
+    return api
+  })($)
+})({})
+
+// EXTENDERS
+
+Lantern.extend(function($) {
+  $.extender = function() {
+    var extensions = arguments
+
+    return function(object) {
+      if (!$.isFunction(object.extend)) {
+        throw new Error("You tried to extend an object that doesn't have an .extend method. Only objects created with Lantern.createObject can be extended")
+      }
+
+      $.forAll(extensions, function(extension) {
+        object.extend(extension)
+      })
+      return object
     }
   }
-
-  return constructor(function($) {
-    $.constructor = constructor
-  })()
-})()
-
-Lantern2.extend(function($, _) {
-  $.test = "it works"
-  $.publicAccessor = function() { return $.test }
-  _.pri = 'seeecrets'
-  $.setter = function(val) { _.pri = val }
-  $.getter = function(val) { return _.pri }
 })
+
+// UTILITIES
+
+Lantern.extend(function($) {
+  // Value definition
+  $.given   = function(val) { return val !== undefined }
+  $.missing = function(val) { return val === undefined }
+  $.default = function(val, _default) {
+    return $.given(val) ? val : _default
+  }
+
+  // Barely-useful utility functions
+  $.noOp = function() {}
+  $.identity = function(x) { return x }
+
+  // Type-checking functions
+  $.isFunction = function(thing) { return typeof thing === 'function' }
+  $.isArray    = function(thing) { return thing instanceof Array }
+  $.isObject   = function(thing) { return thing instanceof Object && !$.isArray(thing) && !$.isFunction(thing) }
+  $.isString   = function(thing) { return typeof thing === 'string' }
+  $.isNumber   = function(thing) { return +thing === thing && !$.isInfinite(thing) }
+  $.isInfinite = function(thing) { return thing === Infinity || thing === -Infinity }
+  $.isBoolean  = function(thing) { return thing === true || thing === false }
+
+  // Iteration
+  $.forAll = function(array, fn) {
+    fn = fn || $.noOp
+    for(var i = 0; i < array.length; i++) {
+      fn(array[i], i)
+    }
+    return array
+  }
+
+  $.forAllPropertiesOf = function(object, fn) {
+    var i = 0, prop
+    fn = fn || $.noOp
+    for(prop in object) {
+      if (Object.prototype.hasOwnProperty.call(object, prop)) {
+        fn(prop, object[prop], i++)
+      }
+    }
+    return object
+  }
+
+  // Call
+  $.call = function(fn, args) {
+    if ($.isFunction(fn)) {
+      return fn.apply(null, args)
+    }
+  }
+})
+
+
+// PROPERTIES
+
+Lantern.extend(function($) {
+  $.addProperties = $.extender(function(target, _target) {
+    var props = _target.propertyValues = {}
+    _target.defineProperty = function(name, value) {
+      props[name] = value
+      var descriptor =
+          { enumerable:   true
+          , configurable: false
+          , get: function() { return props[name] }
+          , set: function(newValue) {
+              var oldValue = props[name]
+              props[name] = newValue
+              $.call(target.fire, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
+            }
+          }
+      Object.defineProperty(target, name, descriptor)
+    }
+
+    _target.aliasProperty = function(alias, name) {
+      var descriptor =
+          { enumerable:   false
+          , configurable: false
+          , get: function() { return target[name] }
+          , set: function(newValue) { target[name] = newValue }
+          }
+      Object.defineProperty(target, alias, descriptor)
+    }
+  })
+})
+
+var Lantern2 = Lantern
+
+// EVENT DISPATCH
+
+Lantern.extend(function($, _) {
+  $.addEvents = $.extender(function($target, _target) {
+    $target.fire = function(event) {
+      $.forAll(_target.callbacksFor(event), function(handler) {
+        $.call(handler, [event, data])
+      })
+    }
+
+    $target.registerEventHandler = function(event, handler) {
+      _target.callbacksFor(event).push(handler)
+    }
+
+    $target.unregisterEventHandler = function(event, handler) {
+      _target.callbacksFor(event).push(handler)
+    }
+
+    $target.clearEventHandlers = function(event, handler) {
+      _target.callbacksFor(event).push(handler)
+    }
+
+    _target.registrarFor = function(event) {
+      var registrar = function(handler) {
+        $target.register(event, handler)
+      }
+
+      registrar.doNot = function(handler) {
+        $.remove(event, _target.callbacksFor(event))
+      }
+
+      registrar.doNothing = function() {
+        $.clear(_target.callbacksFor(event))
+      }
+
+      return registrar
+    }
+  })
+})
+
+
 
 var Lantern = (function (undefined) {
   var $additions = {} // the prototype of Lantern, to which clients can add their own gizmos
@@ -510,23 +662,6 @@ var Lantern = (function (undefined) {
     return d
   }
 
-  $public.constructor = function() {
-    var subs = arguments
-    var constructor = function(params) {
-      var api = {}, internal = {}
-      api.extend = function(extension, params) {
-        $.call(extension, [api, internal, params])
-        return api
-      }
-      $.forAll(subs, function(sub) {
-        $.call(sub, [api, internal, params])
-      })
-
-      return api
-    }
-    return constructor
-  }
-
   $private.nextId = 0
   $private.generateHtmlId = function(prefix) {
     prefix = $.init(prefix, 'lantern-element-')
@@ -763,4 +898,5 @@ var Lantern = (function (undefined) {
 
 Lantern.$noConflict = $
 Object.freeze(Lantern)
-var $ = Lantern
+var $ = Lantern2
+var Lantern = Lantern2
