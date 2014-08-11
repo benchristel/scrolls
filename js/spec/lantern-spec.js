@@ -370,6 +370,18 @@ describe("Lantern utilities", function() {
         })
     })
 
+    describe(".remove", function() {
+        it("removes all instances of the element from the array", function() {
+            var a = [1]
+            $.remove(1, a)
+            expect(a).toEqual([])
+
+            a = [2, 1, 3, 1]
+            $.remove(1, a)
+            expect(a).toEqual([2, 3])
+        })
+    })
+
     describe(".call", function() {
         it("calls the given function and returns the result", function() {
             var fn = function() { return 1 }
@@ -477,8 +489,7 @@ describe("Lantern utilities", function() {
 
     describe('.addEvents', function() {
         it('adds public fireEvent and registerEventHandler methods to the given object', function() {
-            var obj = $.createObject();
-            $.addEvents(obj)
+            var obj = $.addEvents()
 
             var eventCount = 0
             obj.registerEventHandler('exampleEvent', function() {
@@ -492,6 +503,54 @@ describe("Lantern utilities", function() {
             expect(eventCount).toBe(2)
         })
 
-        describe('.removeEventHandler', function() {})
+        describe('.removeEventHandler', function() {
+            it('causes the event handler not to be called when the event is fired', function() {
+                var obj = $.addEvents()
+
+                var eventCount = 0
+                var count = function() {
+                    eventCount++
+                }
+
+                obj.registerEventHandler('foo', count)
+                obj.fireEvent('foo')
+
+                expect(eventCount).toBe(1)
+
+                obj.removeEventHandler('foo', count)
+
+                obj.fireEvent('foo')
+
+                expect(eventCount).toBe(1)
+            })
+        })
+
+        describe('.clearEventHandlers', function() {
+            it('causes all event handlers not to be called when the event is fired', function() {
+                var obj = $.addEvents()
+
+                var eventCount1 = 0, eventCount2 = 0
+                var count1 = function() {
+                    eventCount1++
+                }
+                var count2 = function() {
+                    eventCount2++
+                }
+
+                obj.registerEventHandler('foo', count1)
+                obj.registerEventHandler('foo', count2)
+                obj.fireEvent('foo')
+
+                expect(eventCount1).toBe(1)
+                expect(eventCount2).toBe(1)
+
+                obj.clearEventHandlers('foo')
+
+                obj.fireEvent('foo')
+
+                expect(eventCount1).toBe(1)
+                expect(eventCount2).toBe(1)
+            })
+        })
     })
 })

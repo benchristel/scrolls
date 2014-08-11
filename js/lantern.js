@@ -98,6 +98,15 @@ Lantern.extend(function($) {
     return object
   }
 
+  $.remove = function(item, array) {
+    for (var i = array.length-1; i >= 0; i--) {
+      if (array[i] === item) {
+        array.splice(i, 1)
+      }
+    }
+    return array
+  }
+
   // Call
   $.call = function(fn, args) {
     if ($.isFunction(fn)) {
@@ -155,12 +164,12 @@ Lantern.extend(function($, _) {
       _target.callbacksFor(event).push(handler)
     }
 
-    $target.unregisterEventHandler = function(event, handler) {
-      _target.callbacksFor(event).push(handler)
+    $target.removeEventHandler = function(event, handler) {
+      $.remove(handler, _target.callbacksFor(event))
     }
 
-    $target.clearEventHandlers = function(event, handler) {
-      _target.callbacksFor(event).push(handler)
+    $target.clearEventHandlers = function(event) {
+      _target.callbacksFor(event).length = 0
     }
 
     _target.eventCallbacks = {}
@@ -635,7 +644,7 @@ var Lantern = (function (undefined) {
     $dispatch.receiveEvent('pageLoaded')
   })
   */
-  
+
   return $
 })()
 
