@@ -17,19 +17,19 @@ describe('Strict Mode', function() {
 })
 
 describe('Lantern', function() {
-    describe('.createObject', function() {
+    describe('.makeObject', function() {
         it("returns the object it's given", function() {
             var obj = {}
-            expect(Lantern.createObject(obj)).toBe(obj)
+            expect(Lantern.makeObject(obj)).toBe(obj)
         })
 
         it("creates an object if given none", function() {
-            expect(typeof Lantern.createObject()).toEqual('object')
+            expect(typeof Lantern.makeObject()).toEqual('object')
         })
 
         describe('the returned object', function() {
             beforeEach(function() {
-                this.object = Lantern.createObject()
+                this.object = Lantern.makeObject()
             })
 
             it('has an extend method', function() {
@@ -101,14 +101,14 @@ describe('Lantern', function() {
 
             describe('extending with multiple module definitions', function() {
                 it('calls the modules in order', function() {
-                    var addFoo = function(self) {
+                    var makeFoo = function(self) {
                         self.foo = function() { return "foo" }
                     }
-                    var addBar = function(self, _, sup) {
+                    var makeBar = function(self, _, sup) {
                         self.foo = function() { return sup.foo() + 'bar' }
                     }
 
-                    expect(this.object.extend(addFoo, addBar).foo()).toEqual('foobar')
+                    expect(this.object.extend(makeFoo, makeBar).foo()).toEqual('foobar')
                 })
             })
         })
@@ -120,7 +120,7 @@ describe('Lantern', function() {
                 target.foo = 1
             }
             this.setFoo = Lantern.module(this.f)
-            this.obj = Lantern.createObject()
+            this.obj = Lantern.makeObject()
         })
 
         it('given an extension function, returns a function that, given an object, extends the object with the extension function', function() {
@@ -166,16 +166,16 @@ describe('Lantern', function() {
             })
 
             it('can be passed back to .module to create compound modules', function() {
-                var addFoo = Lantern.module(function(target, _target) {
+                var makeFoo = Lantern.module(function(target, _target) {
                     target.foo = function() { return _target.foo }
                 })
-                var addBar = Lantern.module(function(target, _target, sup) {
+                var makeBar = Lantern.module(function(target, _target, sup) {
                     target.bar = function() { return sup.foo() + 1 }
                     _target.foo = 1
                 })
-                var addFooAndBar = Lantern.module(addFoo, addBar)
+                var makeFooAndBar = Lantern.module(makeFoo, makeBar)
 
-                var obj = addFooAndBar()
+                var obj = makeFooAndBar()
 
                 expect(obj.foo()).toEqual(1)
                 expect(obj.bar()).toEqual(2)
@@ -185,8 +185,8 @@ describe('Lantern', function() {
 
     describe('.createObject', function() {
         it("returns a new object with an extend method", function() {
-            var obj1 = Lantern.createObject()
-            var obj2 = Lantern.createObject()
+            var obj1 = Lantern.makeObject()
+            var obj2 = Lantern.makeObject()
             expect(typeof obj1.extend).toEqual('function')
             expect(obj2).not.toBe(obj1)
         })
@@ -399,13 +399,13 @@ describe("Lantern utilities", function() {
         })
     })
 
-    describe(".addProperties", function() {
+    describe(".makeProperties", function() {
         it("adds private methods defineProperty, aliasProperty, and defineConstant to the given object", function() {
-            var obj = $.createObject()
+            var obj = $.makeObject()
             obj.extend(function(self, _self) {
                 expect(_self.defineProperty).toBe(undefined)
             })
-            $.addProperties(obj)
+            $.makeProperties(obj)
             obj.extend(function(self, _self) {
                 expect(typeof _self.defineProperty).toEqual('function')
                 expect(typeof _self.aliasProperty).toEqual('function')
@@ -414,7 +414,7 @@ describe("Lantern utilities", function() {
 
         describe("the added defineProperty method", function() {
             it("lets modules define properties that fire a propertyChanged event when set", function() {
-                var obj = $.addProperties(Lantern.createObject())
+                var obj = $.makeProperties(Lantern.makeObject())
                 obj.fire = function() {}
                 obj.extend(function(self, _self) {
                     _self.defineProperty('foo', 1)
@@ -430,7 +430,7 @@ describe("Lantern utilities", function() {
 
         describe("the defined properties", function() {
             they("are settable and gettable", function() {
-                var obj = $.addProperties(Lantern.createObject())
+                var obj = $.makeProperties(Lantern.makeObject())
 
                 obj.extend(function(self, _self) {
                     _self.defineProperty('foo', 1)
@@ -447,7 +447,7 @@ describe("Lantern utilities", function() {
 
         describe(".aliasProperty", function() {
             it("defines a non-enumerable property", function() {
-                var obj = $.addProperties(Lantern.createObject())
+                var obj = $.makeProperties(Lantern.makeObject())
 
                 obj.extend(function(self, _self) {
                     _self.defineProperty('color', 'blue')
@@ -460,7 +460,7 @@ describe("Lantern utilities", function() {
             })
 
             it("makes setting and getting the alias the same as setting and getting the property", function() {
-                var obj = $.addProperties(Lantern.createObject())
+                var obj = $.makeProperties(Lantern.makeObject())
 
                 obj.extend(function(self, _self) {
                     _self.defineProperty('color', 'blue')
@@ -487,9 +487,9 @@ describe("Lantern utilities", function() {
         })
     })
 
-    describe('.addEvents', function() {
+    describe('.makeEvents', function() {
         it('adds public fireEvent and registerEventHandler methods to the given object', function() {
-            var obj = $.addEvents()
+            var obj = $.makeEvents()
 
             var eventCount = 0
             obj.registerEventHandler('exampleEvent', function() {
@@ -505,7 +505,7 @@ describe("Lantern utilities", function() {
 
         describe('.removeEventHandler', function() {
             it('causes the event handler not to be called when the event is fired', function() {
-                var obj = $.addEvents()
+                var obj = $.makeEvents()
 
                 var eventCount = 0
                 var count = function() {
@@ -527,7 +527,7 @@ describe("Lantern utilities", function() {
 
         describe('.clearEventHandlers', function() {
             it('causes all event handlers not to be called when the event is fired', function() {
-                var obj = $.addEvents()
+                var obj = $.makeEvents()
 
                 var eventCount1 = 0, eventCount2 = 0
                 var count1 = function() {

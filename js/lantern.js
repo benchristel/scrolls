@@ -7,7 +7,7 @@ var Lantern = (function($) {
     for (var k in from) if (typeof from[k] === 'function') to[k] = from[k]
   }
 
-  return ($.createObject = function(base) {
+  return ($.makeObject = function(base) {
     var api = base || {},
         internal = {},
         modules = []
@@ -41,7 +41,7 @@ Lantern.extend(function($) {
     var moduleDefinitions = arguments
 
     return function(object) {
-      object = $.createObject(object)
+      object = $.makeObject(object)
 
       if (!$.isFunction(object.extend)) {
         throw new Error("You tried to extend an object that doesn't have an .extend method. Only objects created with Lantern.createObject can be extended")
@@ -119,7 +119,7 @@ Lantern.extend(function($) {
 // PROPERTIES
 
 Lantern.extend(function($) {
-  $.addProperties = $.module(function(target, _target) {
+  $.makeProperties = $.module(function(target, _target) {
     var props = _target.propertyValues = {}
     _target.defineProperty = function(name, value) {
       props[name] = value
@@ -153,7 +153,7 @@ var Lantern2 = Lantern
 // EVENT DISPATCH
 
 Lantern.extend(function($, _) {
-  $.addEvents = $.module(function($target, _target) {
+  $.makeEvents = $.module(function($target, _target) {
     $target.fireEvent = function(event, data) {
       $.forAll(_target.callbacksFor(event), function(handler) {
         $.call(handler, [event, data])
