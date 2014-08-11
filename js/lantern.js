@@ -3,31 +3,28 @@
 // KERNEL
 
 var Lantern = (function($) {
+  var copyMethods = function(from, to, fn) {
+    for (var k in from) if (typeof from[k] === 'function') to[k] = from[k]
+  }
+
   return ($.createObject = function(base) {
     var api = base || {},
         internal = {},
-        methods = function(obj, fn) {
-          for (var k in obj) if (typeof obj[k] === 'function') fn(k)
-        }
+        modules = []
 
-    api.extend = function() {
-      var extension,
+    api.extend = api.extend || function() {
+      var module,
           sup = {},
-          internalSup = {},
-          i
+          internalSup = {}
 
-      for(i = 0; i < arguments.length; i++) {
-        extension = arguments[i]
-
-        methods(internal, function(k) {
-          internalSup[k] = internal[k]
-        })
-
-        methods(api, function(k) {
-          sup[k] = api[k]
-        })
-
-        extension.call(null, api, internal, sup, internalSup)
+      for(var i = 0; i < arguments.length; i++) {
+        module = arguments[i]
+        if(modules.indexOf(module) === -1) {
+          copyMethods(internal, internalSup)
+          copyMethods(api, sup)
+          module.call(null, api, internal, sup, internalSup)
+          modules.push(module)
+        }
       }
 
       return api
@@ -37,19 +34,21 @@ var Lantern = (function($) {
   })($)
 })({})
 
-// EXTENDERS
+// MODULES
 
 Lantern.extend(function($) {
-  $.extender = function() {
-    var extensions = arguments
+  $.module = function() {
+    var moduleDefinitions = arguments
 
     return function(object) {
+      object = $.createObject(object)
+
       if (!$.isFunction(object.extend)) {
         throw new Error("You tried to extend an object that doesn't have an .extend method. Only objects created with Lantern.createObject can be extended")
       }
 
-      $.forAll(extensions, function(extension) {
-        object.extend(extension)
+      $.forAll(moduleDefinitions, function(definition) {
+        object.extend(definition)
       })
       return object
     }
@@ -111,7 +110,7 @@ Lantern.extend(function($) {
 // PROPERTIES
 
 Lantern.extend(function($) {
-  $.addProperties = $.extender(function(target, _target) {
+  $.addProperties = $.module(function(target, _target) {
     var props = _target.propertyValues = {}
     _target.defineProperty = function(name, value) {
       props[name] = value
@@ -145,8 +144,8 @@ var Lantern2 = Lantern
 // EVENT DISPATCH
 
 Lantern.extend(function($, _) {
-  $.addEvents = $.extender(function($target, _target) {
-    $target.fire = function(event) {
+  $.addEvents = $.module(function($target, _target) {
+    $target.fireEvent = function(event, data) {
       $.forAll(_target.callbacksFor(event), function(handler) {
         $.call(handler, [event, data])
       })
@@ -162,6 +161,12 @@ Lantern.extend(function($, _) {
 
     $target.clearEventHandlers = function(event, handler) {
       _target.callbacksFor(event).push(handler)
+    }
+
+    _target.eventCallbacks = {}
+    _target.callbacksFor = function(event) {
+      _target.eventCallbacks[event] = _target.eventCallbacks[event] || []
+      return _target.eventCallbacks[event]
     }
 
     _target.registrarFor = function(event) {
@@ -182,7 +187,9 @@ Lantern.extend(function($, _) {
   })
 })
 
+// UI
 
+// base
 
 var Lantern = (function (undefined) {
   var $additions = {} // the prototype of Lantern, to which clients can add their own gizmos
@@ -219,23 +226,6 @@ var Lantern = (function (undefined) {
     , magenta: '#f0f'
     }
 
-  // Value definition
-  $public.given   = function(val) { return val !== undefined }
-  $public.missing = function(val) { return val === undefined }
-  $public.init    = function(val, _default) {
-    return $.given(val) ? val : _default
-  }
-
-  // Barely-useful utility functions
-  $public.noOp = function() {}
-  $public.identity = function(x) { return x }
-
-  // Type-checking functions
-  $public.isFunction = function(thing) { return typeof(thing) === 'function' }
-  $public.isArray    = function(thing) { return thing instanceof Array }
-  $public.isObject   = function(thing) { return thing instanceof Object }
-  $public.isNumber   = function(thing) { return (+thing === thing) }
-
   // Conversion
   $public.toNumericString = function(thing) {
     if ($.missing(thing)) {
@@ -267,14 +257,6 @@ var Lantern = (function (undefined) {
   }
 
   // Array utility functions
-  $public.forAll = function(array, fn) {
-    fn = $.init(fn, $.identity)
-    var transformed = new Array(array.length)
-    for(var i = 0; i < array.length; i++) {
-      transformed[i] = fn(array[i], i)
-    }
-    return transformed
-  }
 
   $public.copy = function(thing) {
     var copy
@@ -301,28 +283,6 @@ var Lantern = (function (undefined) {
       sum += x
     })
     return sum
-  }
-
-  $public.firstOf = function(array) {
-    return array[0]
-  }
-
-  $public.restOf = function(array, start) {
-    // TODO: rename or alias to allButFirst()? e.g. allButFirst(2, args)
-    start = $.init(start, 1)
-    return Array.prototype.slice.call(arguments, [start, array.length])
-  }
-
-  $public.lastOf = function(array) {
-    return array[array.length-1]
-  }
-
-  $public.drawFirst = function(deck) {
-    return deck.shift()
-  }
-
-  $public.drawLast = function(deck) {
-    return deck.pop()
   }
 
   $public.rotated = function(array, numPositions) {
@@ -371,129 +331,6 @@ var Lantern = (function (undefined) {
     array.length = 0
     return array
   }
-
-  // Object utility functions
-  $public.forAllPropertiesOf = function(object, fn) {
-    fn = $.init(fn, $.identity)
-    var accumulated = []
-    for(var prop in object) {
-      if (Object.prototype.hasOwnProperty.call(object, prop)) {
-        accumulated.push(fn(prop, object[prop]))
-      }
-    }
-    return accumulated
-  }
-
-  $public.merged = function(obj1, obj2) {
-    return $.merge($.copy(obj1), obj2)
-  }
-
-  $public.merge = function(obj1, obj2) {
-    $.forAllPropertiesOf(obj2, function(k, v) {
-      obj1[k] = v
-    })
-    return obj1
-  }
-
-  // Randomness
-  $public.rollD = function(sides) {
-    return Math.ceil(Math.random() * sides)
-  }
-
-  $public.pickRandomly = function(array) {
-    return array[$.rollD(array.length)-1]
-  }
-
-  $public.drawRandomly = function(array) {
-    var index = $.rollD(array.length) - 1
-    var drawn = array[index]
-    array.splice(index, 1)
-    return drawn
-  }
-
-  // this simulates a riffle shuffle, which is not particularly random.
-  // for more randomness, use $.scramble(array)
-  $public.shuffle = function(array, nTimes) {
-    var deck = array, stacks, card
-    nTimes = $.init(nTimes, 1)
-    $.repeat(nTimes, function() {
-      stacks = $.cut(deck)
-      deck = []
-      while (stacks[0].length && stacks[1].length) {
-        card = $.drawFirst($.pickRandomly(stacks))
-        deck.push(card)
-      }
-      deck = deck.concat(stacks[0], stacks[1])
-    })
-    return $.replace(array, deck)
-  }
-
-  $public.scramble = function(array) {
-    var scrambled = []
-    while(array.length) {
-      scrambled.push($.drawRandomly(array))
-    }
-    return $.replace(array, scrambled)
-  }
-
-  // Function utilities
-  $public.call = function(fn, args, thisVal) {
-    if ($.isFunction(fn)) {
-      return fn.apply(thisVal || $, args)
-    }
-    return undefined
-  }
-
-  $public.extend = function(object, method, extension) {
-    var originalMethod = object[method]
-    return object[method] = $.extended(originalMethod, extension)
-  }
-
-  $public.extended = function(fn, extension) {
-    return function() {
-      $.call(fn, arguments, this)
-      return $.call(extension, arguments, this)
-    }
-  }
-
-  $public.addProperties = function(object, props, options) {
-    options = $.init(options, {})
-    var writable = $.init(options.writable, true)
-    $.forAllPropertiesOf(props, function(name, value) {
-      (function () {
-        var _propertyValue = value
-        var descriptor =
-            { enumerable:   $.init(options.enumerable, true)
-            , configurable: false
-            , get: function() { return _propertyValue }
-            }
-        if (writable) {
-          descriptor.set = function(newValue) {
-            var oldValue = _propertyValue
-            _propertyValue = newValue
-            $.call(object.receiveEvent, ['propertyChanged', name, oldValue, newValue], object)
-          }
-        }
-        Object.defineProperty(object, name, descriptor)
-      })()
-    })
-    return $
-  }
-
-  $public.aliasProperties = function(object, aliases) {
-    $.forAllPropertiesOf(aliases, function(alias, name) {
-      var descriptor =
-          { enumerable:   false
-          , configurable: false
-          , set: function(newValue) { object[name] = newValue }
-          , get: function() { return object[name] }
-          }
-      Object.defineProperty(object, alias, descriptor)
-    })
-    return $
-  }
-
-  $public.seal = function(obj) { return Object.seal(obj) }
 
   // Time
   $public.now = function() { return Number(new Date()) }
@@ -566,102 +403,6 @@ var Lantern = (function (undefined) {
     })
   }
 
-  $private.cap = function(s) { return s.charAt(0).toUpperCase()+s.slice(1, s.length) }
-
-  $private.addEventDispatcher = function(host) {
-    var d = function(eventName) {
-      return function(eventData) {
-        d.receiveEvent(eventName, eventData)
-      }
-    }
-
-    var promises = []
-    var received = {}
-
-    d.receiveEvent = function(eventName, rawData) {
-      var cb = d.registeredCallbacks[eventName]
-      var data = d.process(rawData)
-      received[eventName] = true
-      if ($.isArray(cb)) {
-        $.forAll(cb, function(c) { $.call(c, [data]) })
-      }
-      $.forAll(promises, function(promise) {
-        promise.oath.resolve()
-      })
-    }
-
-    d.process = $.identity
-
-    d.register = function(handlerMapping) {
-      d.unregister(handlerMapping) // prevent handlers from being registered more than once
-      $.forAllPropertiesOf(handlerMapping, function(eventName, handlers) {
-        d.registeredCallbacks[eventName] = $.init(d.registeredCallbacks[eventName], [])
-        // TODO: $.init(handle.registeredCallbacks, eventName, []) would be cool
-        if ($.isArray(handlers)) {
-          var map = {}
-          $.forAll(handlers, function(handler) {
-            map[eventName] = handler
-          })
-          d.register(map)
-        } else if ($.isFunction(handlers)) {
-          d.registeredCallbacks[eventName].push(handlers)
-        } else {
-          throw "Can't register event handler for "+eventName+": "+handlers
-        }
-      })
-    }
-
-    d.unregister = function(handlerMapping) {
-      $.forAllPropertiesOf(handlerMapping, function(eventName, handlers) {
-        // TODO: $.init(handle.registeredCallbacks, eventName, []) would be cool
-        if ($.isArray(handlers)) {
-          var map = {}
-          $.forAll(handlers, function(handler) {
-            map[eventName] = handler
-            d.unregister(map)
-          })
-        } else if ($.isFunction(handlers)) {
-          if ($.isArray(d.registeredCallbacks[eventName])) {
-            $.remove(handlers, d.registeredCallbacks[eventName])
-          }
-        } else {
-          throw "Can't unregister event handler for "+eventName+": "+handlers
-        }
-      })
-    }
-
-    d.registrar = function(eventName) {
-      var registrar = function() {
-        var map = {}
-        map[eventName] = $.forAll(arguments)
-        d.register(map)
-      }
-
-      registrar.doNot = function() {
-        var map = {}
-        map[eventName] = $.forAll(arguments)
-        d.unregister(map)
-      }
-
-      registrar.doNothing = function() {
-        d.registeredCallbacks[eventName] = []
-      }
-
-      return registrar
-    }
-
-    d.registeredCallbacks = {}
-
-    $.addProperties(host,
-      { receiveEvent: d.receiveEvent
-      , subscribeTo: d.register
-      }
-    , {writable: false}
-    )
-
-    return d
-  }
-
   $private.nextId = 0
   $private.generateHtmlId = function(prefix) {
     prefix = $.init(prefix, 'lantern-element-')
@@ -672,7 +413,7 @@ var Lantern = (function (undefined) {
   // UI ELEMENTS //
   // ----------- //
 
-  $private.createUiElement = function(params, extender) {
+  $private.createUiElement = function(params, module) {
     params = $.init(params, {})
     var secret = $.init(secret, {})
     var ui = {}
@@ -811,7 +552,7 @@ var Lantern = (function (undefined) {
       return css
     }
 
-    $.call(extender, [ui, secret])
+    $.call(module, [ui, secret])
 
     ui.redraw()
 
@@ -855,6 +596,7 @@ var Lantern = (function (undefined) {
     return self
   }
 
+  /*
   // when the screen is set, remove any created UI elements from the old screen
   // and add them to the new one.
   var _screen = function(v) {
@@ -892,7 +634,8 @@ var Lantern = (function (undefined) {
 
     $dispatch.receiveEvent('pageLoaded')
   })
-
+  */
+  
   return $
 })()
 

@@ -29,7 +29,6 @@ describe('Lantern', function() {
 
         describe('the returned object', function() {
             beforeEach(function() {
-                //this.spawner = Lantern.createSpawner(function() {})
                 this.object = Lantern.createObject()
             })
 
@@ -54,7 +53,19 @@ describe('Lantern', function() {
                     expect(returned).toBe(this.object)
                 })
 
-                it('passes the object, private container, super of the object, and super of the private container to the extender function', function() {
+                it('an object cannot extend a module more than once', function() {
+                    var module = function(self) {
+                        self.foo = 'bar'
+                    }
+
+                    this.object.extend(module)
+                    expect(this.object.foo).toEqual('bar')
+                    this.object.foo = 'quaxxor'
+                    this.object.extend(module)
+                    expect(this.object.foo).toEqual('quaxxor')
+                })
+
+                it('passes the object, private container, super of the object, and super of the private container to the module function', function() {
                     this.object.extend(function(self, _self, original, _original) {
                         self.getSecret = function() { return _self.secret }
                         _self.secret = 'be sure to drink your ovaltine'
@@ -64,7 +75,7 @@ describe('Lantern', function() {
                     expect(this.object.getSecret()).toBe('be sure to drink your ovaltine')
                 })
 
-                it('allows methods defined by the extender to call super methods', function() {
+                it('allows methods defined by the module to call super methods', function() {
                     this.object.extend(function(self, _self) {
                         self.getSecret = function() { return "From the depths of my soul: " + _self.getSecret() }
                         _self.getSecret = function() { return _self.secret }
@@ -88,8 +99,8 @@ describe('Lantern', function() {
                 })
             })
 
-            describe('extending with multiple extender functions', function() {
-                it('calls the extenders in order', function() {
+            describe('extending with multiple module definitions', function() {
+                it('calls the modules in order', function() {
                     var addFoo = function(self) {
                         self.foo = function() { return "foo" }
                     }
@@ -103,12 +114,12 @@ describe('Lantern', function() {
         })
     })
 
-    describe('.extender', function() {
+    describe('.module', function() {
         beforeEach(function() {
             this.f = function(target) {
                 target.foo = 1
             }
-            this.setFoo = Lantern.extender(this.f)
+            this.setFoo = Lantern.module(this.f)
             this.obj = Lantern.createObject()
         })
 
@@ -119,7 +130,7 @@ describe('Lantern', function() {
         })
 
         it('given multiple extension functions, returns a function that, given an object, extends the object with each extension function in order', function() {
-            var setFooAndBar = Lantern.extender(
+            var setFooAndBar = Lantern.module(
                 function(target) {
                     target.foo = 1
                     target.baz = []
@@ -144,11 +155,30 @@ describe('Lantern', function() {
                 expect(this.setFoo(this.obj)).toBe(this.obj)
             })
 
-            it('raises an error if called with an object that does not implement .extend', function() {
-                var _this = this
-                expect(function() {
-                    _this.setFoo({})
-                }).toThrowError("You tried to extend an object that doesn't have an .extend method. Only objects created with Lantern.createObject can be extended")
+            it('creates a new object if given none', function() {
+                var obj = this.setFoo()
+                expect(obj.foo).toBe(1)
+            })
+
+            it('defines the extend method if given an object that does not implement it', function() {
+                var obj = this.setFoo({})
+                expect(obj.extend).not.toBe(undefined)
+            })
+
+            it('can be passed back to .module to create compound modules', function() {
+                var addFoo = Lantern.module(function(target, _target) {
+                    target.foo = function() { return _target.foo }
+                })
+                var addBar = Lantern.module(function(target, _target, sup) {
+                    target.bar = function() { return sup.foo() + 1 }
+                    _target.foo = 1
+                })
+                var addFooAndBar = Lantern.module(addFoo, addBar)
+
+                var obj = addFooAndBar()
+
+                expect(obj.foo()).toEqual(1)
+                expect(obj.bar()).toEqual(2)
             })
         })
     })
@@ -371,7 +401,7 @@ describe("Lantern utilities", function() {
         })
 
         describe("the added defineProperty method", function() {
-            it("lets extenders define properties that fire a propertyChanged event when set", function() {
+            it("lets modules define properties that fire a propertyChanged event when set", function() {
                 var obj = $.addProperties(Lantern.createObject())
                 obj.fire = function() {}
                 obj.extend(function(self, _self) {
@@ -443,5 +473,25 @@ describe("Lantern utilities", function() {
                 expect(changed).toEqual(['color', 'color'])
             })
         })
+    })
+
+    describe('.addEvents', function() {
+        it('adds public fireEvent and registerEventHandler methods to the given object', function() {
+            var obj = $.createObject();
+            $.addEvents(obj)
+
+            var eventCount = 0
+            obj.registerEventHandler('exampleEvent', function() {
+                eventCount++
+            })
+            obj.fireEvent('exampleEvent')
+            expect(eventCount).toBe(1)
+            obj.fireEvent('otherEvent')
+            expect(eventCount).toBe(1)
+            obj.fireEvent('exampleEvent')
+            expect(eventCount).toBe(2)
+        })
+
+        describe('.removeEventHandler', function() {})
     })
 })
