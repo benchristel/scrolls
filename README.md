@@ -24,7 +24,7 @@ Modular Inheritance Philosophy
 Lantern uses something which I'm calling modular inheritance because I haven't seen it anywhere else and don't know a better name for it. The closest analogy I can draw to another language is Ruby's mixin pattern. Modular inheritance builds objects by combining modules—small, often independent pieces of functionality. It bears some resemblance to classical inheritance in that the order in which modules are included is important; modules can override existing methods and call the original implementation, similar to the way `super` works in Ruby. Modular inheritance differs from Ruby's mixins in that modules can be instantiated. Because methods defined in a module enclose local variables in the module definition, there are three possible levels of member visibility: public, object-private, and module-private. Public members form the object's interface. Object-private members are not accessible from outside the object but can be accessed from inside other modules. Module-private members can only be accessed within the module that defines them.
 
 ```javascript
-var Memoization = Lantern.module(function(pub, priv) {
+var makeMemoizedMethods = Lantern.createModule(function(pub, priv) {
   var memos = {}
 
   priv.defineMemoizedMethod = function(name, method) {
@@ -36,9 +36,9 @@ var Memoization = Lantern.module(function(pub, priv) {
   }
 })
 
-var myObject = Memoization()
+var myObject = makeMemoizedMethods()
 
-myObject.extend(function(pub, priv) {
+myObject.mod(function(pub, priv) {
   priv.defineMemoizedMethod('meaningOfLife', function() {
     return /* some expensive calculation */
   })
