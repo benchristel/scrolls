@@ -12,7 +12,7 @@ var Lantern = (function($) {
         internal = {},
         modules = []
 
-    api.extend = api.extend || function() {
+    api.mod = api.mod || function() {
       var module,
           sup = {},
           internalSup = {}
@@ -36,19 +36,19 @@ var Lantern = (function($) {
 
 // MODULES
 
-Lantern.extend(function($) {
+Lantern.mod(function($) {
   $.createModule = function() {
     var moduleDefinitions = arguments
 
     return function(object) {
       object = $.makeObject(object)
 
-      if (!$.isFunction(object.extend)) {
-        throw new Error("You tried to extend an object that doesn't have an .extend method. Only objects created with Lantern.createObject can be extended")
+      if (!$.isFunction(object.mod)) {
+        throw new Error("You tried to mod an object that doesn't have an .mod method. Only objects created with Lantern.createObject can be modded")
       }
 
       $.forAll(moduleDefinitions, function(definition) {
-        object.extend(definition)
+        object.mod(definition)
       })
       return object
     }
@@ -57,7 +57,7 @@ Lantern.extend(function($) {
 
 // UTILITIES
 
-Lantern.extend(function($) {
+Lantern.mod(function($) {
   // Value definition
   $.given   = function(val) { return val !== undefined }
   $.missing = function(val) { return val === undefined }
@@ -118,7 +118,7 @@ Lantern.extend(function($) {
 
 // PROPERTIES
 
-Lantern.extend(function($) {
+Lantern.mod(function($) {
   $.makeProperties = $.createModule(function(target, _target) {
     var props = _target.propertyValues = {}
     _target.defineProperty = function(name, value) {
@@ -152,7 +152,7 @@ var Lantern2 = Lantern
 
 // EVENT DISPATCH
 
-Lantern.extend(function($, _) {
+Lantern.mod(function($, _) {
   $.makeEvents = $.createModule(function($target, _target) {
     $target.fireEvent = function(event, data) {
       $.forAll(_target.callbacksFor(event), function(handler) {

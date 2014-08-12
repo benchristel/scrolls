@@ -33,12 +33,12 @@ describe('Lantern', function() {
             })
 
             it('has an extend method', function() {
-                expect(typeof this.object.extend).toEqual('function')
+                expect(typeof this.object.mod).toEqual('function')
             })
 
             describe('extending the created object', function() {
                 it('modifies the original object', function() {
-                    this.object.extend(function(self) {
+                    this.object.mod(function(self) {
                         self.foo = 'bar'
                     })
 
@@ -46,7 +46,7 @@ describe('Lantern', function() {
                 })
 
                 it('returns the original object', function() {
-                    var returned = this.object.extend(function(self) {
+                    var returned = this.object.mod(function(self) {
                         self.foo = 'bar'
                     })
 
@@ -58,15 +58,15 @@ describe('Lantern', function() {
                         self.foo = 'bar'
                     }
 
-                    this.object.extend(module)
+                    this.object.mod(module)
                     expect(this.object.foo).toEqual('bar')
                     this.object.foo = 'quaxxor'
-                    this.object.extend(module)
+                    this.object.mod(module)
                     expect(this.object.foo).toEqual('quaxxor')
                 })
 
                 it('passes the object, private container, super of the object, and super of the private container to the module function', function() {
-                    this.object.extend(function(self, _self, original, _original) {
+                    this.object.mod(function(self, _self, original, _original) {
                         self.getSecret = function() { return _self.secret }
                         _self.secret = 'be sure to drink your ovaltine'
                     })
@@ -76,7 +76,7 @@ describe('Lantern', function() {
                 })
 
                 it('allows methods defined by the module to call super methods', function() {
-                    this.object.extend(function(self, _self) {
+                    this.object.mod(function(self, _self) {
                         self.getSecret = function() { return "From the depths of my soul: " + _self.getSecret() }
                         _self.getSecret = function() { return _self.secret }
                         _self.secret = 'be sure to drink your ovaltine'
@@ -85,7 +85,7 @@ describe('Lantern', function() {
                     expect(this.object.secret).toBe(undefined)
                     expect(this.object.getSecret()).toEqual('From the depths of my soul: be sure to drink your ovaltine')
 
-                    this.object.extend(function(self, _self, sup, _sup) {
+                    this.object.mod(function(self, _self, sup, _sup) {
                         self.getSecret = function() {
                             return 'From ages past: ' + sup.getSecret()
                         }
@@ -108,7 +108,7 @@ describe('Lantern', function() {
                         self.foo = function() { return sup.foo() + 'bar' }
                     }
 
-                    expect(this.object.extend(makeFoo, makeBar).foo()).toEqual('foobar')
+                    expect(this.object.mod(makeFoo, makeBar).foo()).toEqual('foobar')
                 })
             })
         })
@@ -162,7 +162,7 @@ describe('Lantern', function() {
 
             it('defines the extend method if given an object that does not implement it', function() {
                 var obj = this.setFoo({})
-                expect(obj.extend).not.toBe(undefined)
+                expect(obj.mod).not.toBe(undefined)
             })
 
             it('can be passed back to .createModule to create compound modules', function() {
@@ -187,7 +187,7 @@ describe('Lantern', function() {
         it("returns a new object with an extend method", function() {
             var obj1 = Lantern.makeObject()
             var obj2 = Lantern.makeObject()
-            expect(typeof obj1.extend).toEqual('function')
+            expect(typeof obj1.mod).toEqual('function')
             expect(obj2).not.toBe(obj1)
         })
     })
@@ -402,11 +402,11 @@ describe("Lantern utilities", function() {
     describe(".makeProperties", function() {
         it("adds private methods defineProperty, aliasProperty, and defineConstant to the given object", function() {
             var obj = $.makeObject()
-            obj.extend(function(self, _self) {
+            obj.mod(function(self, _self) {
                 expect(_self.defineProperty).toBe(undefined)
             })
             $.makeProperties(obj)
-            obj.extend(function(self, _self) {
+            obj.mod(function(self, _self) {
                 expect(typeof _self.defineProperty).toEqual('function')
                 expect(typeof _self.aliasProperty).toEqual('function')
             })
@@ -416,7 +416,7 @@ describe("Lantern utilities", function() {
             it("lets modules define properties that fire a propertyChanged event when set", function() {
                 var obj = $.makeProperties(Lantern.makeObject())
                 obj.fire = function() {}
-                obj.extend(function(self, _self) {
+                obj.mod(function(self, _self) {
                     _self.defineProperty('foo', 1)
                 })
 
@@ -432,7 +432,7 @@ describe("Lantern utilities", function() {
             they("are settable and gettable", function() {
                 var obj = $.makeProperties(Lantern.makeObject())
 
-                obj.extend(function(self, _self) {
+                obj.mod(function(self, _self) {
                     _self.defineProperty('foo', 1)
                     _self.defineProperty('greeting', "hi")
                 })
@@ -449,7 +449,7 @@ describe("Lantern utilities", function() {
             it("defines a non-enumerable property", function() {
                 var obj = $.makeProperties(Lantern.makeObject())
 
-                obj.extend(function(self, _self) {
+                obj.mod(function(self, _self) {
                     _self.defineProperty('color', 'blue')
                     _self.aliasProperty('colour', 'color')
                 })
@@ -462,7 +462,7 @@ describe("Lantern utilities", function() {
             it("makes setting and getting the alias the same as setting and getting the property", function() {
                 var obj = $.makeProperties(Lantern.makeObject())
 
-                obj.extend(function(self, _self) {
+                obj.mod(function(self, _self) {
                     _self.defineProperty('color', 'blue')
                     _self.aliasProperty('colour', 'color')
                 })
