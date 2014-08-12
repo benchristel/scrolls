@@ -37,7 +37,7 @@ var Lantern = (function($) {
 // MODULES
 
 Lantern.extend(function($) {
-  $.module = function() {
+  $.createModule = function() {
     var moduleDefinitions = arguments
 
     return function(object) {
@@ -119,7 +119,7 @@ Lantern.extend(function($) {
 // PROPERTIES
 
 Lantern.extend(function($) {
-  $.makeProperties = $.module(function(target, _target) {
+  $.makeProperties = $.createModule(function(target, _target) {
     var props = _target.propertyValues = {}
     _target.defineProperty = function(name, value) {
       props[name] = value
@@ -153,7 +153,7 @@ var Lantern2 = Lantern
 // EVENT DISPATCH
 
 Lantern.extend(function($, _) {
-  $.makeEvents = $.module(function($target, _target) {
+  $.makeEvents = $.createModule(function($target, _target) {
     $target.fireEvent = function(event, data) {
       $.forAll(_target.callbacksFor(event), function(handler) {
         $.call(handler, [event, data])

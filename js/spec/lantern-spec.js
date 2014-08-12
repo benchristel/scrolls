@@ -114,12 +114,12 @@ describe('Lantern', function() {
         })
     })
 
-    describe('.module', function() {
+    describe('.createModule', function() {
         beforeEach(function() {
             this.f = function(target) {
                 target.foo = 1
             }
-            this.setFoo = Lantern.module(this.f)
+            this.setFoo = Lantern.createModule(this.f)
             this.obj = Lantern.makeObject()
         })
 
@@ -130,7 +130,7 @@ describe('Lantern', function() {
         })
 
         it('given multiple extension functions, returns a function that, given an object, extends the object with each extension function in order', function() {
-            var setFooAndBar = Lantern.module(
+            var setFooAndBar = Lantern.createModule(
                 function(target) {
                     target.foo = 1
                     target.baz = []
@@ -165,15 +165,15 @@ describe('Lantern', function() {
                 expect(obj.extend).not.toBe(undefined)
             })
 
-            it('can be passed back to .module to create compound modules', function() {
-                var makeFoo = Lantern.module(function(target, _target) {
+            it('can be passed back to .createModule to create compound modules', function() {
+                var makeFoo = Lantern.createModule(function(target, _target) {
                     target.foo = function() { return _target.foo }
                 })
-                var makeBar = Lantern.module(function(target, _target, sup) {
+                var makeBar = Lantern.createModule(function(target, _target, sup) {
                     target.bar = function() { return sup.foo() + 1 }
                     _target.foo = 1
                 })
-                var makeFooAndBar = Lantern.module(makeFoo, makeBar)
+                var makeFooAndBar = Lantern.createModule(makeFoo, makeBar)
 
                 var obj = makeFooAndBar()
 
@@ -183,7 +183,7 @@ describe('Lantern', function() {
         })
     })
 
-    describe('.createObject', function() {
+    describe('.makeObject', function() {
         it("returns a new object with an extend method", function() {
             var obj1 = Lantern.makeObject()
             var obj2 = Lantern.makeObject()
