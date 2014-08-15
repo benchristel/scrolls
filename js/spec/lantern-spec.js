@@ -414,28 +414,27 @@ describe("Lantern utilities", function() {
         })
     })
 
-    describe(".makeProperties", function() {
-        it("adds private methods defineProperty, aliasProperty, and defineConstant to the given object", function() {
+    describe(".makePropertyChangeEvents", function() {
+        it("adds a private method defineProperty to the given object", function() {
             var obj = $.makeObject()
             obj.mod(function(self, _self) {
                 expect(_self.defineProperty).toBe(undefined)
             })
-            $.makeProperties(obj)
+            $.makePropertyChangeEvents(obj)
             obj.mod(function(self, _self) {
                 expect(typeof _self.defineProperty).toEqual('function')
-                expect(typeof _self.aliasProperty).toEqual('function')
             })
         })
 
         describe("the added defineProperty method", function() {
             it("lets modules define properties that fire a propertyChanged event when set", function() {
-                var obj = $.makeProperties(Lantern.makeObject())
+                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
                 obj.fire = function() {}
                 obj.mod(function(self, _self) {
                     _self.defineProperty('foo', 1)
                 })
 
-                var spy = spyOn(obj, 'fire')
+                var spy = spyOn(obj, 'fireEvent')
 
                 obj.foo = 2
 
@@ -445,7 +444,7 @@ describe("Lantern utilities", function() {
 
         describe("the defined properties", function() {
             they("are settable and gettable", function() {
-                var obj = $.makeProperties(Lantern.makeObject())
+                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
 
                 obj.mod(function(self, _self) {
                     _self.defineProperty('foo', 1)
@@ -459,15 +458,32 @@ describe("Lantern utilities", function() {
                 expect(obj.greeting).toEqual("hi")
             })
         })
+    })
+
+    describe('.makeAliasedProperties', function() {
+        it('creates an object with a private aliasProperty method', function() {
+            var obj = $.makeObject()
+
+            obj.mod(function(target, _target) {
+                expect(_target.aliasProperty).toBe(undefined)
+            })
+
+            $.makeAliasedProperties(obj)
+
+            obj.mod(function(target, _target) {
+                expect(typeof _target.aliasProperty).toEqual('function')
+            })
+        })
 
         describe(".aliasProperty", function() {
             it("defines a non-enumerable property", function() {
-                var obj = $.makeProperties(Lantern.makeObject())
+                var obj = $.makeAliasedProperties()
 
                 obj.mod(function(self, _self) {
-                    _self.defineProperty('color', 'blue')
                     _self.aliasProperty('colour', 'color')
                 })
+
+                obj.colour = 'blue'
 
                 $.forAllPropertiesOf(obj, function(k) {
                     expect(k).not.toEqual('colour')
@@ -475,19 +491,12 @@ describe("Lantern utilities", function() {
             })
 
             it("makes setting and getting the alias the same as setting and getting the property", function() {
-                var obj = $.makeProperties(Lantern.makeObject())
+                var obj = $.makeAliasedProperties()
+                obj.color = 'blue'
 
                 obj.mod(function(self, _self) {
-                    _self.defineProperty('color', 'blue')
                     _self.aliasProperty('colour', 'color')
                 })
-
-                var changed = []
-                obj.fire = function(eventName, event) {
-                    if (eventName === 'propertyChanged') {
-                        changed.push(event.property)
-                    }
-                }
 
                 expect(obj.colour).toEqual('blue')
                 expect(obj.color).toEqual('blue')
@@ -497,7 +506,6 @@ describe("Lantern utilities", function() {
                 obj.color = 'red'
                 expect(obj.color).toEqual('red')
                 expect(obj.colour).toEqual('red')
-                expect(changed).toEqual(['color', 'color'])
             })
         })
     })
@@ -566,6 +574,19 @@ describe("Lantern utilities", function() {
                 expect(eventCount1).toBe(1)
                 expect(eventCount2).toBe(1)
             })
+        })
+    })
+
+    describe('.makeConstants', function() {
+        it('adds a private defineConstant method to the object', function() {
+            var obj = $.makeConstants()
+
+            obj.mod(function(target, _target) {
+                _target.defineConstant('PI', 3.14159)
+            })
+
+            expect(obj.PI).toBeCloseTo(3.14159, 0.0001)
+            expect(function() { obj.PI = 1 }).toThrow("You can't change the value of PI")
         })
     })
 })

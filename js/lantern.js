@@ -34,6 +34,8 @@ var Lantern = (function($) {
   })($)
 })({})
 
+var $ = Lantern
+
 // MODULES
 
 Lantern.mod(function($) {
@@ -115,90 +117,287 @@ Lantern.mod(function($) {
   }
 })
 
+// EVENT DISPATCH
+
+$.makeEvents = $.createModule(function($target, _target) {
+  $target.fireEvent = function(event, data) {
+    $.forAll(_target.callbacksFor(event), function(handler) {
+      $.call(handler, [event, data])
+    })
+  }
+
+  $target.registerEventHandler = function(event, handler) {
+    _target.callbacksFor(event).push(handler)
+  }
+
+  $target.removeEventHandler = function(event, handler) {
+    $.remove(handler, _target.callbacksFor(event))
+  }
+
+  $target.clearEventHandlers = function(event) {
+    _target.callbacksFor(event).length = 0
+  }
+
+  _target.eventCallbacks = {}
+  _target.callbacksFor = function(event) {
+    _target.eventCallbacks[event] = _target.eventCallbacks[event] || []
+    return _target.eventCallbacks[event]
+  }
+
+  _target.registrarFor = function(event) {
+    var registrar = function(handler) {
+      $target.register(event, handler)
+    }
+
+    registrar.doNot = function(handler) {
+      $.remove(event, _target.callbacksFor(event))
+    }
+
+    registrar.doNothing = function() {
+      $.clear(_target.callbacksFor(event))
+    }
+
+    return registrar
+  }
+})
 
 // PROPERTIES
 
-Lantern.mod(function($) {
-  $.makeProperties = $.createModule(function(target, _target) {
-    var props = _target.propertyValues = {}
-    _target.defineProperty = function(name, value) {
-      props[name] = value
-      var descriptor =
-          { enumerable:   true
-          , configurable: false
-          , get: function() { return props[name] }
-          , set: function(newValue) {
-              var oldValue = props[name]
-              props[name] = newValue
-              $.call(target.fire, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
-            }
+$.makePropertyChangeEvents = $.createModule($.makeEvents, function(target, _target) {
+  var props = _target.propertyValues = {}
+  _target.defineProperty = function(name, value) {
+    props[name] = value
+    var descriptor =
+        { enumerable:   true
+        , configurable: false
+        , get: function() { return props[name] }
+        , set: function(newValue) {
+            var oldValue = props[name]
+            props[name] = newValue
+            $.call(target.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
           }
-      Object.defineProperty(target, name, descriptor)
+        }
+    Object.defineProperty(target, name, descriptor)
+  }
+})
+
+$.makeAliasedProperties = $.createModule(function(target, _target) {
+  _target.aliasProperty = function(alias, name) {
+    var descriptor =
+        { enumerable:   false
+        , configurable: false
+        , get: function() { return target[name] }
+        , set: function(newValue) { target[name] = newValue }
+        }
+    Object.defineProperty(target, alias, descriptor)
+  }
+})
+
+$.makeConstants = $.createModule(function(target, _target) {
+  var constants = _target.constantValues = {}
+  _target.defineConstant = function(name, value) {
+    constants[name] = value
+    var descriptor =
+        { enumerable:   true
+        , configurable: false
+        , get: function() { return constants[name] }
+        , set: function() { throw "You can't change the value of "+name }
+        }
+    Object.defineProperty(target, name, descriptor)
+  }
+})
+
+$.makePositionable = $.createModule(function(target) {
+  target.top    = 0
+  target.left   = 0
+  target.height = 0
+  target.width  = 0
+
+  target.centerHorizontallyOn = function(other) {
+    target.left = other.left + other.width / 2 - target.width / 2
+  }
+
+  target.centerVerticallyOn = function(other) {
+    target.top = other.top + other.height / 2 - target.height / 2
+  }
+
+  target.putAbove = function(other, spacing) {
+    target.top = other.top - target.height - (spacing || 0)
+  }
+
+  target.putBelow = function(other, spacing) {
+    target.top = other.top + other.height + (spacing || 0)
+  }
+})
+
+Lantern.mod(function($) {
+  var addElement = function(tag) {
+    var elem = document.createElement(tag || 'div')
+
+    appendToScreen(elem)
+    return elem
+  }
+
+  var appendToScreen = function(elem) {
+    //_.uiElements.push(elem)
+    addElementsToDom(/*$.screen*/ document.getElementsByTagName('body')[0], [elem])
+  }
+
+  var addElementsToDom = function(parent, elements) {
+    if (!parent || !$.isArray(elements)) return
+    $.forAll(elements, function(elem) {
+      parent.appendChild(elem)
+    })
+  }
+
+  var toNumericString = function(thing) {
+    if (!thing) {
+      return '0'
+    }
+    return String(Number(thing))
+  }
+
+  var toCss = function(obj) {
+    var ary = []
+    $.forAllPropertiesOf(obj, function(k, v) {
+      ary.push(k + ":" + v + ";")
+    })
+
+    return ary.join("")
+  }
+
+  $.makeUiElement = $.createModule(
+    $.makeEvents,
+    $.makeConstants,
+    $.makePositionable,
+    $.makePropertyChangeEvents,
+    function(target, _target) {
+      _target.domElement = addElement(_target.tag)
+
+      $.forAllPropertiesOf(
+        { whenClicked:             _target.registrarFor('clicked')
+        , whenMouseEnters:         _target.registrarFor('mouseEnters')
+        , whenMouseLeaves:         _target.registrarFor('mouseLeaves')
+        , whenMouseMoves:          _target.registrarFor('mouseMoves')
+        , whenKeyPressed:          _target.registrarFor('keyPressed')
+        , whenKeyReleased:         _target.registrarFor('keyReleased')
+        , whenInputChanged:        _target.registrarFor('inputChanged')
+        },
+        _target.defineConstant
+      )
+
+      _target.setEventHandlers = function(attrs) {
+        var el = _target.domElement
+        el.onclick     = function() { target.fireEvent('clicked') }
+        el.onmouseover = function() { target.fireEvent('mouseEnters') }
+        el.onmouseout  = function() { target.fireEvent('mouseLeaves') }
+        el.onmousemove = function() { target.fireEvent('mouseMoves') }
+        el.onkeydown   = function() { target.fireEvent('keyPressed') }
+
+        el.onkeyup = function() {
+          _target.withoutRedrawing(function() {
+            target.fireEvent('inputMayHaveChanged')
+          })
+          target.fireEvent('keyReleased')
+          target.redraw()
+        }
+        el.onchange = function() {
+          _target.withoutRedrawing(function() {
+            target.fireEvent('inputMayHaveChanged')
+          })
+          _target.fireEvent('changed')
+          target.redraw()
+        }
+      }
+
+      _target.withoutRedrawing = function(fn) {
+        var old = target.redraw
+        target.redraw = $.noOp
+        fn()
+        target.redraw = old
+      }
+
+      $.forAllPropertiesOf(
+        { //id:   _.generateHtmlId()
+          top:  0
+        , left: 0
+        , height: 50
+        , width:  100
+        , visible: true
+        , text: ''
+        , fontSize: 20
+        , textColor: 'black'
+        , color: 'white'
+        , borderWidth: 1
+        , borderColor: 'lightGray'
+        , scrollable: false
+        , cursor: 'auto'
+        , data: {} // this property is not used by Lantern; it's for the user to store their own data
+        },
+        _target.defineProperty
+      )
+
+      target.redraw = function () {
+        _target.setText(target.text)
+        _target.setAttributes(_target.htmlAttributes())
+        _target.setEventHandlers() // TODO: is this line needed?
+      }
+
+      target.registerEventHandler('propertyChanged', function() { target.redraw() })
+
+      _target.setText = function(value) {
+        _target.domElement.innerHTML = value //$.htmlEscape(value)
+      }
+
+      _target.setAttributes = function(attrs) {
+        $.forAllPropertiesOf(attrs, function(name, value) {
+          _target.domElement.setAttribute(name, value)
+        })
+      }
+
+      _target.htmlAttributes = function() {
+        return {
+          style: _target.toCss()
+          //id: ui.id
+        }
+      }
+
+    _target.toCss = function() { return toCss(_target.asCss()) }
+    _target.asCss = function() {
+      var css =
+        { 'top'    : toNumericString(target.top)+'px'
+        , 'left'   : toNumericString(target.left)+'px'
+        , 'height' : toNumericString(target.height)+'px'
+        , 'width'  : toNumericString(target.width)+'px'
+        , 'color'  : target.textColor //$.COLOR[target.textColor]
+        , 'background-color' : target.color //$.COLOR[target.color]
+        , 'display' : (target.visible ? 'block' : 'none')
+        , 'border-color' : target.borderColor //$.COLOR[target.borderColor]
+        , 'border-width' : toNumericString(target.borderWidth)+'px'
+        , 'position' : 'absolute'
+        , 'font-size' : toNumericString(target.fontSize)+'px'
+        , 'white-space' : 'pre-wrap'
+        , 'overflow-x' : 'hidden'
+        , 'overflow-y' : (target.scrollable ? 'auto' : 'hidden')
+        , 'cursor' : target.cursor
+        }
+      return css
     }
 
-    _target.aliasProperty = function(alias, name) {
-      var descriptor =
-          { enumerable:   false
-          , configurable: false
-          , get: function() { return target[name] }
-          , set: function(newValue) { target[name] = newValue }
-          }
-      Object.defineProperty(target, alias, descriptor)
-    }
+    target.redraw()
   })
+
+  var makeTextInputDefinition = function(target, _target) {
+    _target.tag = 'input'
+  }
+
+  $.makeTextInput = $.createModule(
+      makeTextInputDefinition,
+      $.makeUiElement
+  )
 })
 
 var Lantern2 = Lantern
-
-// EVENT DISPATCH
-
-Lantern.mod(function($, _) {
-  $.makeEvents = $.createModule(function($target, _target) {
-    $target.fireEvent = function(event, data) {
-      $.forAll(_target.callbacksFor(event), function(handler) {
-        $.call(handler, [event, data])
-      })
-    }
-
-    $target.registerEventHandler = function(event, handler) {
-      _target.callbacksFor(event).push(handler)
-    }
-
-    $target.removeEventHandler = function(event, handler) {
-      $.remove(handler, _target.callbacksFor(event))
-    }
-
-    $target.clearEventHandlers = function(event) {
-      _target.callbacksFor(event).length = 0
-    }
-
-    _target.eventCallbacks = {}
-    _target.callbacksFor = function(event) {
-      _target.eventCallbacks[event] = _target.eventCallbacks[event] || []
-      return _target.eventCallbacks[event]
-    }
-
-    _target.registrarFor = function(event) {
-      var registrar = function(handler) {
-        $target.register(event, handler)
-      }
-
-      registrar.doNot = function(handler) {
-        $.remove(event, _target.callbacksFor(event))
-      }
-
-      registrar.doNothing = function() {
-        $.clear(_target.callbacksFor(event))
-      }
-
-      return registrar
-    }
-  })
-})
-
-// UI
-
-// base
 
 var Lantern = (function (undefined) {
   var $additions = {} // the prototype of Lantern, to which clients can add their own gizmos
@@ -234,20 +433,6 @@ var Lantern = (function (undefined) {
     , cyan:    '#0ff'
     , magenta: '#f0f'
     }
-
-  // Conversion
-  $public.toNumericString = function(thing) {
-    if ($.missing(thing)) {
-      return '0'
-    }
-    return String(Number(thing))
-  }
-
-  $public.toCss = function(obj) {
-    return $.forAllPropertiesOf(obj, function(k, v) {
-      return k + ":" + v + ";"
-    }).join("")
-  }
 
   $public.htmlEscape = function(s) {
     return String(s)
@@ -294,20 +479,6 @@ var Lantern = (function (undefined) {
     return sum
   }
 
-  $public.rotated = function(array, numPositions) {
-    numPositions = $.init(numPositions, 1)
-    sliceIndex = (array.length - numPositions) % array.length
-    if (sliceIndex < 0) sliceIndex += array.length
-    var beginning = array.slice(0, sliceIndex)
-    var end = array.slice(sliceIndex, array.length)
-    return end.concat(beginning)
-  }
-
-  $public.rotate = function(array, numPositions) {
-    $.replace(array, $.rotated(array, numPositions))
-    return array
-  }
-
   $public.repeat = function(nTimes, fn) {
     fn = $.init(fn, $.identity)
     var count = 0
@@ -322,27 +493,10 @@ var Lantern = (function (undefined) {
     return generated
   }
 
-  $public.cut = function(array) {
-    var middle = Math.floor(array.length / 2)
-    return [array.slice(0,middle), array.slice(middle, array.length)]
-  }
-
-  $public.remove = function(item, array) {
-    for (var i = array.length-1; i >= 0; i--) {
-      if (array[i] === item) {
-        array.splice(i, 1)
-      }
-    }
-    return array
-  }
-
   $public.clear = function(array) {
     array.length = 0
     return array
   }
-
-  // Time
-  $public.now = function() { return Number(new Date()) }
 
   $public.everySecond = function(fn) { return window.setInterval(fn, 1000) }
 
@@ -353,29 +507,6 @@ var Lantern = (function (undefined) {
     $.clear(_.uiElements)
   }
 
-  // Other Utilities
-  $public.swear = function() {
-    var resolved = false, queued = []
-    var oath =
-    { to: function(fn) {
-        if (resolved) {
-          $.call(fn)
-        } else {
-          queued.push(fn)
-        }
-        return oath
-      }
-    , resolve: function() {
-        resolved = true
-        $.forAll(queued, function(fn) { $.call(fn) })
-        $.clear(queued)
-        return oath
-      }
-    }
-    oath.and = oath.to
-    return oath
-  }
-
   $private.turtleX = 0
   $private.turtleY = 0
   $private.resetTurtle = function() { _.turtleX = _.turtleY = 0 }
@@ -383,26 +514,6 @@ var Lantern = (function (undefined) {
   $private.appendToScreen = function(elem) {
     _.uiElements.push(elem)
     _.addElementsToDom($.screen, [elem])
-  }
-
-  $private.addElement = function(tag, attrs) {
-    attrs = $.init(attrs, {})
-    var elem = document.createElement(tag || 'div')
-
-    for(var attr in attrs) {
-      if (attrs.hasOwnProperty(attr)) {
-        elem.setAttribute(attr, attrs[attr])
-      }
-    }
-    _.appendToScreen(elem)
-    return elem
-  }
-
-  $private.addElementsToDom = function(parent, elements) {
-    if (!parent || !$.isArray(elements)) return
-    $.forAll(elements, function(elem) {
-      parent.appendChild(elem)
-    })
   }
 
   $private.removeAllElementsFromDom = function() {
@@ -421,153 +532,6 @@ var Lantern = (function (undefined) {
   // ----------- //
   // UI ELEMENTS //
   // ----------- //
-
-  $private.createUiElement = function(params, module) {
-    params = $.init(params, {})
-    var secret = $.init(secret, {})
-    var ui = {}
-
-    secret.domElement = _.addElement(params.tag)
-
-    var dispatch = secret.dispatch = _.addEventDispatcher(ui)
-
-    $.addProperties(ui,
-      { whenClicked:             dispatch.registrar('clicked')
-      , whenMouseEnters:         dispatch.registrar('mouseEnters')
-      , whenMouseLeaves:         dispatch.registrar('mouseLeaves')
-      , whenMouseMoves:          dispatch.registrar('mouseMoves')
-      , whenKeyPressed:          dispatch.registrar('keyPressed')
-      , whenKeyReleased:         dispatch.registrar('keyReleased')
-      , whenInputChanged:        dispatch.registrar('inputChanged')
-      }
-    , { writable: false }
-    )
-
-    secret.setEventHandlers = function(attrs) {
-      var el = secret.domElement
-      el.onclick     = dispatch('clicked')
-      el.onmouseover = dispatch('mouseEnters')
-      el.onmouseout  = dispatch('mouseLeaves')
-      el.onmousemove = dispatch('mouseMoves')
-      el.onkeydown   = dispatch('keyPressed')
-
-      el.onkeyup = function() {
-        secret.withoutRedrawing(function() {
-          dispatch.receiveEvent('inputMayHaveChanged')
-        })
-        dispatch.receiveEvent('keyReleased')
-        ui.redraw()
-      }
-      el.onchange = function() {
-        secret.withoutRedrawing(function() {
-          dispatch.receiveEvent('inputMayHaveChanged')
-        })
-        dispatch.receiveEvent('changed')
-        ui.redraw()
-      }
-    }
-
-    secret.withoutRedrawing = function(fn) {
-      var old = ui.redraw
-      ui.redraw = $.noOp
-      fn()
-      ui.redraw = old
-    }
-
-    $.addProperties(ui,
-      { id:   _.generateHtmlId()
-      , top:  _.turtleY
-      , left: _.turtleX
-      , height: 50
-      , width:  100
-      , visible: true
-      , text: ''
-      , fontSize: 20
-      , textColor: 'black'
-      , color: 'white'
-      , borderWidth: 1
-      , borderColor: 'lightGray'
-      , scrollable: false
-      , cursor: 'auto'
-      , data: {} // this property is not used by Lantern; it's for the user to store their own data
-      })
-
-    _.turtleX += 100
-    if (_.turtleX > 800) {
-      _.turtleX = 0
-      _.turtleY += 50
-    }
-
-    ui.centerHorizontallyOn = function(other) {
-      ui.left = other.left + other.width / 2 - ui.width / 2
-    }
-
-    ui.centerVerticallyOn = function(other) {
-      ui.top = other.top + other.height / 2 - ui.height / 2
-    }
-
-    ui.putAbove = function(other, spacing) {
-      ui.top = other.top - ui.height - $.init(spacing, 0)
-    }
-
-    ui.putBelow = function(other, spacing) {
-      ui.top = other.top + other.height + $.init(spacing, 0)
-    }
-
-    ui.redraw = function () {
-      secret.setText(ui.text)
-      secret.setAttributes(secret.htmlAttributes())
-      secret.setEventHandlers() // TODO: is this line needed?
-    }
-
-    dispatch.register({propertyChanged: function() { ui.redraw() }})
-
-    secret.setText = function(value) {
-      secret.domElement.innerHTML = $.htmlEscape(value)
-    }
-
-    secret.setAttributes = function (attrs) {
-      $.forAllPropertiesOf(attrs, function(name, value) {
-        secret.domElement.setAttribute(name, value)
-      })
-    }
-
-    secret.htmlAttributes = function () {
-      return $.merge({
-        style: secret.toCss(),
-        id: ui.id
-      }, $.call(secret.htmlAttributes.extension) || {})
-    }
-
-    secret.toCss = function() { return $.toCss(secret.asCss()) }
-    secret.asCss = function() {
-      var css =
-        { 'top'    : $.toNumericString(ui.top)+'px'
-        , 'left'   : $.toNumericString(ui.left)+'px'
-        , 'height' : $.toNumericString(ui.height)+'px'
-        , 'width'  : $.toNumericString(ui.width)+'px'
-        , 'color'  : $.COLOR[ui.textColor]
-        , 'background-color' : $.COLOR[ui.color]
-        , 'display' : (ui.visible ? 'block' : 'none')
-        , 'border-color' : $.COLOR[ui.borderColor]
-        , 'border-width' : $.toNumericString(ui.borderWidth)+'px'
-        , 'position' : 'absolute'
-        , 'font-size' : $.toNumericString(ui.fontSize)+'px'
-        , 'white-space' : 'pre-wrap'
-        , 'overflow-x' : 'hidden'
-        , 'overflow-y' : (ui.scrollable ? 'auto' : 'hidden')
-        , 'cursor' : ui.cursor
-        }
-      return css
-    }
-
-    $.call(module, [ui, secret])
-
-    ui.redraw()
-
-    $.seal(ui)
-    return ui
-  }
 
   $public.createButton = function() {
     var self = _.createUiElement({tag: 'button'})
