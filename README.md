@@ -21,32 +21,30 @@ Lantern is a special-purpose tool, not a silver bullet. There are some things th
 Modular Inheritance Philosophy
 ------------------------------
 
-Lantern uses something which I'm calling modular inheritance because I haven't seen it anywhere else and don't know a better name for it. The closest analogy I can draw to another language is Ruby's mixin pattern. Modular inheritance builds objects by combining modules—small, often independent pieces of functionality. It bears some resemblance to classical inheritance in that the order in which modules are included is important; modules can override existing methods and call the original implementation, similar to the way `super` works in Ruby. Modular inheritance differs from Ruby's mixins in that modules can be instantiated. Because methods defined in a module enclose local variables in the module definition, there are three possible levels of member visibility: public, object-private, and module-private. Public members form the object's interface. Object-private members are not accessible from outside the object but can be accessed from inside other modules. Module-private members can only be accessed within the module that defines them.
+In contrast to classical inheritance (exemplified by Java) and prototypal inheritance (JavaScript), Lantern uses *modular inheritance* to organize application-level types. Under the modular inheritance paradigm, objects are built by *installing* one or more *modules* which define independent or loosely-coupled pieces of functionality. Modules may specify other modules as dependencies. The set of modules that are installed on an object can be thought of as defining the object's type. The object on which modules are installed is referred to as the *target*.
+
+The order in which modules are installed can be significant, because modules may override methods from other modules and call the *`inherited`* (c.f. Java's *`super`*) implementation. Dependencies are guaranteed to be installed before the module that requires them unless there is a dependency cycle. Installation is idempotent. No module may be installed more than once on a given target, so once a module is installed, its place in the inheritance chain is fixed.
+
+Lantern's implementation of modular inheritance allows modules to define members with three levels of visibility: *public*, *shared*, and *private*.
+- **Public** properties can be accessed from any code with a reference to the object.
+- **Shared** properties can only be accessed from modules installed on the object.
+- **Private** variables (declared with `var`) can only be accessed within the module that defines them.
+
+Method visibility example:
 
 ```javascript
-var makeMemoizedMethods = Lantern.createModule(function(pub, priv) {
-  var memos = {}
-
-  priv.defineMemoizedMethod = function(name, method) {
-    pub[name] = function() { return memos[name] = memos[name] || method() }
+var makeAwesome = Lantern.createModule(function(api, shared, inherited) {
+  api.doAThing = function() {
+    // delegate to the pre-existing implementation
+    return inherited.doAThing() + secretSauce()
   }
 
-  pub.clearMemos = function() {
-    memos = {}
+  shared.doSomethingElse = function() {
+    // the `inherited` object holds both public and shared inherited methods
+    return inherited.doSomethingElse() + secretSauce()
   }
-})
 
-var myObject = makeMemoizedMethods()
-
-myObject.mod(function(pub, priv) {
-  priv.defineMemoizedMethod('meaningOfLife', function() {
-    return /* some expensive calculation */
-  })
+  // this is a private "method"
+  var secretSauce = function() { return " but even more awesome" }
 })
 ```
-
-If you're wondering where `myObject.extend` comes from, it's a bit of magic that gets added to any object that's been created from a module.
-
-API Reference
--------------
-
