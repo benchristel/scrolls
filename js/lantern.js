@@ -146,15 +146,15 @@ $.makeEvents = $.createModule(function($target, _target) {
 
   _target.registrarFor = function(event) {
     var registrar = function(handler) {
-      $target.register(event, handler)
+      $target.registerEventHandler(event, handler)
     }
 
     registrar.doNot = function(handler) {
-      $.remove(event, _target.callbacksFor(event))
+      $target.removeEventHandler(event, handler)
     }
 
     registrar.doNothing = function() {
-      $.clear(_target.callbacksFor(event))
+      $target.clearEventHandlers(event)
     }
 
     return registrar

@@ -189,5 +189,22 @@ describe('Lantern UI', function() {
             var afterCount = jQuery('button').length
             expect(afterCount).toEqual(beforeCount + 1)
         })
+
+        describe('the button', function() {
+            it('can handle click events', function() {
+                var button = Lantern.createButton()
+
+                var called = false
+                button.whenClicked(function() {
+                    called = true
+                })
+
+                expect(called).toBe(false)
+
+                jQuery('button').trigger('click')
+
+                expect(called).toBe(true)
+            })
+        })
     })
 })
