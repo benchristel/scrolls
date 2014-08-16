@@ -163,9 +163,9 @@ $.makeEvents = $.createModule(function($target, _target) {
 
 // PROPERTIES
 
-$.makePropertyChangeEvents = $.createModule($.makeEvents, function(target, _target) {
-  var props = _target.propertyValues = {}
-  _target.defineProperty = function(name, value) {
+$.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, shared) {
+  var props = shared.propertyValues = {}
+  shared.defineProperty = function(name, value) {
     props[name] = value
     var descriptor =
         { enumerable:   true
@@ -174,28 +174,28 @@ $.makePropertyChangeEvents = $.createModule($.makeEvents, function(target, _targ
         , set: function(newValue) {
             var oldValue = props[name]
             props[name] = newValue
-            $.call(target.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
+            $.call(api.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
           }
         }
-    Object.defineProperty(target, name, descriptor)
+    Object.defineProperty(api, name, descriptor)
   }
 })
 
-$.makeAliasedProperties = $.createModule(function(target, _target) {
-  _target.aliasProperty = function(alias, name) {
+$.makeAliasedProperties = $.createModule(function(api, shared) {
+  shared.aliasProperty = function(alias, name) {
     var descriptor =
         { enumerable:   false
         , configurable: false
-        , get: function() { return target[name] }
-        , set: function(newValue) { target[name] = newValue }
+        , get: function() { return api[name] }
+        , set: function(newValue) { api[name] = newValue }
         }
-    Object.defineProperty(target, alias, descriptor)
+    Object.defineProperty(api, alias, descriptor)
   }
 })
 
-$.makeConstants = $.createModule(function(target, _target) {
-  var constants = _target.constantValues = {}
-  _target.defineConstant = function(name, value) {
+$.makeConstants = $.createModule(function(api, shared) {
+  var constants = shared.constantValues = {}
+  shared.defineConstant = function(name, value) {
     constants[name] = value
     var descriptor =
         { enumerable:   true
@@ -203,30 +203,30 @@ $.makeConstants = $.createModule(function(target, _target) {
         , get: function() { return constants[name] }
         , set: function() { throw "You can't change the value of "+name }
         }
-    Object.defineProperty(target, name, descriptor)
+    Object.defineProperty(api, name, descriptor)
   }
 })
 
-$.makePositionable = $.createModule(function(target) {
-  target.top    = 0
-  target.left   = 0
-  target.height = 0
-  target.width  = 0
+$.makePositionable = $.createModule(function(self) {
+  self.top    = 0
+  self.left   = 0
+  self.height = 0
+  self.width  = 0
 
-  target.centerHorizontallyOn = function(other) {
-    target.left = other.left + other.width / 2 - target.width / 2
+  self.centerHorizontallyOn = function(other) {
+    self.left = other.left + other.width / 2 - self.width / 2
   }
 
-  target.centerVerticallyOn = function(other) {
-    target.top = other.top + other.height / 2 - target.height / 2
+  self.centerVerticallyOn = function(other) {
+    self.top = other.top + other.height / 2 - self.height / 2
   }
 
-  target.putAbove = function(other, spacing) {
-    target.top = other.top - target.height - (spacing || 0)
+  self.putAbove = function(other, spacing) {
+    self.top = other.top - self.height - (spacing || 0)
   }
 
-  target.putBelow = function(other, spacing) {
-    target.top = other.top + other.height + (spacing || 0)
+  self.putBelow = function(other, spacing) {
+    self.top = other.top + other.height + (spacing || 0)
   }
 })
 
@@ -267,54 +267,54 @@ Lantern.mod(function($) {
   }
 
   $.makeUiElement = $.createModule(
-    $.makeEvents,
-    $.makeConstants,
-    $.makePositionable,
-    $.makePropertyChangeEvents,
-    function(target, _target) {
-      _target.domElement = addElement(target.tag)
+      $.makeEvents,
+      $.makeConstants,
+      $.makePositionable,
+      $.makePropertyChangeEvents,
+    function(api, shared) {
+      shared.domElement = addElement(api.tag)
 
       $.forAllPropertiesOf(
-        { whenClicked:             _target.registrarFor('clicked')
-        , whenMouseEnters:         _target.registrarFor('mouseEnters')
-        , whenMouseLeaves:         _target.registrarFor('mouseLeaves')
-        , whenMouseMoves:          _target.registrarFor('mouseMoves')
-        , whenKeyPressed:          _target.registrarFor('keyPressed')
-        , whenKeyReleased:         _target.registrarFor('keyReleased')
-        , whenInputChanged:        _target.registrarFor('inputChanged')
+        { whenClicked:             shared.registrarFor('clicked')
+        , whenMouseEnters:         shared.registrarFor('mouseEnters')
+        , whenMouseLeaves:         shared.registrarFor('mouseLeaves')
+        , whenMouseMoves:          shared.registrarFor('mouseMoves')
+        , whenKeyPressed:          shared.registrarFor('keyPressed')
+        , whenKeyReleased:         shared.registrarFor('keyReleased')
+        , whenInputChanged:        shared.registrarFor('inputChanged')
         },
-        _target.defineConstant
+        shared.defineConstant
       )
 
-      _target.setEventHandlers = function(attrs) {
-        var el = _target.domElement
-        el.onclick     = function() { target.fireEvent('clicked') }
-        el.onmouseover = function() { target.fireEvent('mouseEnters') }
-        el.onmouseout  = function() { target.fireEvent('mouseLeaves') }
-        el.onmousemove = function() { target.fireEvent('mouseMoves') }
-        el.onkeydown   = function() { target.fireEvent('keyPressed') }
+      shared.setEventHandlers = function(attrs) {
+        var el = shared.domElement
+        el.onclick     = function() { api.fireEvent('clicked') }
+        el.onmouseover = function() { api.fireEvent('mouseEnters') }
+        el.onmouseout  = function() { api.fireEvent('mouseLeaves') }
+        el.onmousemove = function() { api.fireEvent('mouseMoves') }
+        el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
         el.onkeyup = function() {
-          _target.withoutRedrawing(function() {
-            target.fireEvent('inputMayHaveChanged')
+          shared.withoutRedrawing(function() {
+            api.fireEvent('inputMayHaveChanged')
           })
-          target.fireEvent('keyReleased')
-          target.redraw()
+          api.fireEvent('keyReleased')
+          api.redraw()
         }
         el.onchange = function() {
-          _target.withoutRedrawing(function() {
-            target.fireEvent('inputMayHaveChanged')
+          shared.withoutRedrawing(function() {
+            api.fireEvent('inputMayHaveChanged')
           })
-          _target.fireEvent('changed')
-          target.redraw()
+          api.fireEvent('changed')
+          api.redraw()
         }
       }
 
-      _target.withoutRedrawing = function(fn) {
-        var old = target.redraw
-        target.redraw = $.noOp
+      shared.withoutRedrawing = function(fn) {
+        var old = api.redraw
+        api.redraw = $.noOp
         fn()
-        target.redraw = old
+        api.redraw = old
       }
 
       $.forAllPropertiesOf(
@@ -334,58 +334,57 @@ Lantern.mod(function($) {
         , cursor: 'auto'
         , data: {} // this property is not used by Lantern; it's for the user to store their own data
         },
-        _target.defineProperty
+        shared.defineProperty
       )
 
-      target.redraw = function () {
-        _target.setText(target.text)
-        _target.setAttributes(_target.htmlAttributes())
-        _target.setEventHandlers() // TODO: is this line needed?
+      api.redraw = function () {
+        shared.setText(api.text)
+        shared.setAttributes(shared.htmlAttributes())
+        shared.setEventHandlers() // TODO: is this line needed?
       }
 
-      target.registerEventHandler('propertyChanged', function() { target.redraw() })
+      api.registerEventHandler('propertyChanged', function() { api.redraw() })
 
-      _target.setText = function(value) {
-        _target.domElement.innerHTML = value //$.htmlEscape(value)
+      shared.setText = function(value) {
+        shared.domElement.innerHTML = value //$.htmlEscape(value)
       }
 
-      _target.setAttributes = function(attrs) {
+      shared.setAttributes = function(attrs) {
         $.forAllPropertiesOf(attrs, function(name, value) {
-          _target.domElement.setAttribute(name, value)
+          shared.domElement.setAttribute(name, value)
         })
       }
 
-      _target.htmlAttributes = function() {
+      shared.htmlAttributes = function() {
         return {
-          style: _target.toCss()
+          style: shared.toCss()
           //id: ui.id
         }
       }
 
-    _target.toCss = function() { return toCss(_target.asCss()) }
-    _target.asCss = function() {
-      var css =
-        { 'top'    : toNumericString(target.top)+'px'
-        , 'left'   : toNumericString(target.left)+'px'
-        , 'height' : toNumericString(target.height)+'px'
-        , 'width'  : toNumericString(target.width)+'px'
-        , 'color'  : target.textColor //$.COLOR[target.textColor]
-        , 'background-color' : target.color //$.COLOR[target.color]
-        , 'display' : (target.visible ? 'block' : 'none')
-        , 'border-color' : target.borderColor //$.COLOR[target.borderColor]
-        , 'border-width' : toNumericString(target.borderWidth)+'px'
-        , 'position' : 'absolute'
-        , 'font-size' : toNumericString(target.fontSize)+'px'
-        , 'white-space' : 'pre-wrap'
-        , 'overflow-x' : 'hidden'
-        , 'overflow-y' : (target.scrollable ? 'auto' : 'hidden')
-        , 'cursor' : target.cursor
-        }
-      return css
+      shared.toCss = function() { return toCss(shared.asCss()) }
+      shared.asCss = function() {
+        var css =
+          { 'top'    : toNumericString(api.top)+'px'
+          , 'left'   : toNumericString(api.left)+'px'
+          , 'height' : toNumericString(api.height)+'px'
+          , 'width'  : toNumericString(api.width)+'px'
+          , 'color'  : api.textColor //$.COLOR[target.textColor]
+          , 'background-color' : api.color //$.COLOR[target.color]
+          , 'display' : (api.visible ? 'block' : 'none')
+          , 'border-color' : api.borderColor //$.COLOR[target.borderColor]
+          , 'border-width' : toNumericString(api.borderWidth)+'px'
+          , 'position' : 'absolute'
+          , 'font-size' : toNumericString(api.fontSize)+'px'
+          , 'white-space' : 'pre-wrap'
+          , 'overflow-x' : 'hidden'
+          , 'overflow-y' : (api.scrollable ? 'auto' : 'hidden')
+          , 'cursor' : api.cursor
+          }
+        return css
+      }
     }
-
-    target.redraw()
-  })
+  )
 
   var makeTextInputDefinition = function(target, _target) {
     _target.tag = 'input'
@@ -398,7 +397,7 @@ Lantern.mod(function($) {
 
   $.createButton = function() {
     var button = $.makeUiElement({tag: 'button'})
-    //button.redraw()
+    button.redraw()
     return button
   }
 })
