@@ -272,7 +272,7 @@ Lantern.mod(function($) {
     $.makePositionable,
     $.makePropertyChangeEvents,
     function(target, _target) {
-      _target.domElement = addElement(_target.tag)
+      _target.domElement = addElement(target.tag)
 
       $.forAllPropertiesOf(
         { whenClicked:             _target.registrarFor('clicked')
@@ -395,6 +395,12 @@ Lantern.mod(function($) {
       makeTextInputDefinition,
       $.makeUiElement
   )
+
+  $.createButton = function() {
+    var button = $.makeUiElement({tag: 'button'})
+    //button.redraw()
+    return button
+  }
 })
 
 var Lantern2 = Lantern
