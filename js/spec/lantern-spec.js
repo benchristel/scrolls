@@ -190,6 +190,13 @@ describe('Lantern UI', function() {
             expect(afterCount).toEqual(beforeCount + 1)
         })
 
+        it('makes the button a child of the element with id `lantern-portal`', function() {
+            var beforeCount = jQuery('#lantern-portal button').length
+            Lantern.createButton()
+            var afterCount = jQuery('#lantern-portal button').length
+            expect(afterCount).toEqual(beforeCount + 1)
+        })
+
         describe('the button', function() {
             it('can handle click events', function() {
                 var button = Lantern.createButton()

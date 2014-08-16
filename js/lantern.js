@@ -230,24 +230,32 @@ $.makePositionable = $.createModule(function(self) {
   }
 })
 
-Lantern.mod(function($) {
+Lantern.mod(function($, $internal) {
+  $internal.uiElements = []
+
   var addElement = function(tag) {
     var elem = document.createElement(tag || 'div')
 
-    appendToScreen(elem)
+    appendToPortal(elem)
     return elem
   }
 
-  var appendToScreen = function(elem) {
-    //_.uiElements.push(elem)
-    addElementsToDom(/*$.screen*/ document.getElementsByTagName('body')[0], [elem])
+  var appendToPortal = function(elem) {
+    $internal.uiElements.push(elem)
+    if ($internal.portalDomElement) {
+      addElementsAsChildrenOf($internal.portalDomElement, elem)
+    }
   }
 
-  var addElementsToDom = function(parent, elements) {
-    if (!parent || !$.isArray(elements)) return
-    $.forAll(elements, function(elem) {
-      parent.appendChild(elem)
-    })
+  var addElementsAsChildrenOf = function(parent, elements) {
+    if (!parent) return
+    if ($.isArray(elements)) {
+      $.forAll(elements, function(elem) {
+        parent.appendChild(elem)
+      })
+    } else {
+      parent.appendChild(elements)
+    }
   }
 
   var toNumericString = function(thing) {
@@ -266,13 +274,25 @@ Lantern.mod(function($) {
     return ary.join("")
   }
 
+  var nextId = 0
+  var generateHtmlId = function() {
+    return 'lantern-element-'+(nextId++)
+  }
+
   $.makeUiElement = $.createModule(
       $.makeEvents,
       $.makeConstants,
       $.makePositionable,
       $.makePropertyChangeEvents,
     function(api, shared) {
-      shared.domElement = addElement(api.tag)
+      shared.domElement = document.createElement(api.tag || 'div') //addElement(api.tag)
+
+      api.appendChild = function(childDomElement) {
+        shared.domElement.appendChild(childDomElement)
+      }
+      api.appendTo = function(parent) {
+        parent.appendChild(shared.domElement)
+      }
 
       $.forAllPropertiesOf(
         { whenClicked:             shared.registrarFor('clicked')
@@ -294,20 +314,21 @@ Lantern.mod(function($) {
         el.onmousemove = function() { api.fireEvent('mouseMoves') }
         el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
-        el.onkeyup = function() {
-          shared.withoutRedrawing(function() {
-            api.fireEvent('inputMayHaveChanged')
-          })
-          api.fireEvent('keyReleased')
-          api.redraw()
-        }
-        el.onchange = function() {
-          shared.withoutRedrawing(function() {
-            api.fireEvent('inputMayHaveChanged')
-          })
-          api.fireEvent('changed')
-          api.redraw()
-        }
+        // BUG: if this is uncommented, clicking a button and then pressing a key while the button is focused will remove the portal from the screen. WHYYYY
+        //el.onkeyup = function() {
+        //  shared.withoutRedrawing(function() {
+        //    api.fireEvent('inputMayHaveChanged')
+        //  })
+        //  api.fireEvent('keyReleased')
+        //  api.redraw()
+        //}
+        //el.onchange = function() {
+        //  shared.withoutRedrawing(function() {
+        //    api.fireEvent('inputMayHaveChanged')
+        //  })
+        //  api.fireEvent('changed')
+        //  api.redraw()
+        //}
       }
 
       shared.withoutRedrawing = function(fn) {
@@ -318,8 +339,8 @@ Lantern.mod(function($) {
       }
 
       $.forAllPropertiesOf(
-        { //id:   _.generateHtmlId()
-          top:  0
+        { id:   generateHtmlId()
+        , top:  0
         , left: 0
         , height: 50
         , width:  100
@@ -358,7 +379,7 @@ Lantern.mod(function($) {
       shared.htmlAttributes = function() {
         return {
           style: shared.toCss()
-          //id: ui.id
+        , id: api.id
         }
       }
 
@@ -374,31 +395,74 @@ Lantern.mod(function($) {
           , 'display' : (api.visible ? 'block' : 'none')
           , 'border-color' : api.borderColor //$.COLOR[target.borderColor]
           , 'border-width' : toNumericString(api.borderWidth)+'px'
+          , 'border-style' : 'solid'
           , 'position' : 'absolute'
           , 'font-size' : toNumericString(api.fontSize)+'px'
           , 'white-space' : 'pre-wrap'
           , 'overflow-x' : 'hidden'
           , 'overflow-y' : (api.scrollable ? 'auto' : 'hidden')
           , 'cursor' : api.cursor
+          , 'z-index' : -1
           }
         return css
       }
     }
   )
 
-  var makeTextInputDefinition = function(target, _target) {
-    _target.tag = 'input'
-  }
-
-  $.makeTextInput = $.createModule(
-      makeTextInputDefinition,
-      $.makeUiElement
+  $internal.makeRelativePositionedElement = $.createModule(
+    $.makeUiElement,
+    function(self, shared, __, inherited) {
+      shared.asCss = function() {
+        var css = inherited.asCss()
+        css.position = 'relative'
+        css['margin-left'] = 'auto'
+        css['margin-right'] = 'auto'
+        return css
+      }
+    }
   )
 
   $.createButton = function() {
     var button = $.makeUiElement({tag: 'button'})
+    $internal.uiElements.push(button)
+    button.appendTo($.portal)
     button.redraw()
     return button
+  }
+})
+
+Lantern.mod(function($, $shared) {
+  $.background = $.makeUiElement().mod(function(self, shared, __, inherited) {
+    shared.asCss = function() {
+      var css = inherited.asCss()
+      delete css.height
+      css.width = '100%'
+      css.top = '0'
+      css.bottom = '0'
+      css.border = 'none'
+      return css
+    }
+  })
+  $.background.id = 'lantern-background'
+  $.background.color = 'black'
+
+  $.portal = $shared.makeRelativePositionedElement()
+  $.portal.top = 50
+  $.portal.width = 1000
+  $.portal.height = 600
+  $.portal.id = 'lantern-portal'
+  $.portal.appendTo($.background)
+
+  var oldOnload = window.onload
+  window.onload = function() {
+    if(oldOnload) oldOnload.apply(window, arguments)
+    var body = document.getElementsByTagName('body')[0]
+    body.setAttribute('style', 'padding:0;margin:0')
+    $.background.appendTo(body)
+
+    $.forAll($shared.uiElements, function(elem) {
+      elem.appendTo($.portal)
+    })
   }
 })
 
@@ -573,46 +637,6 @@ var Lantern = (function (undefined) {
 
     return self
   }
-
-  /*
-  // when the screen is set, remove any created UI elements from the old screen
-  // and add them to the new one.
-  var _screen = function(v) {
-    if ($.given(v) && v !== _screen.d) {
-      _.removeAllElementsFromDom()
-      _screen.d = v
-      _.addElementsToDom(_screen.d, _.uiElements)
-    }
-    return _screen.d
-  }
-  _screen.d = null
-  Object.defineProperty($, 'screen', {set: _screen, get: _screen, configurable: false})
-
-  var $dispatch = _.addEventDispatcher($)
-
-  $.addProperties($
-  , { whenPageLoadFinishes: $dispatch.registrar('pageLoaded')
-    , whenKeyPressed:       $dispatch.registrar('keyPressed')
-    }
-  , { writable: false }
-  )
-
-  $.addProperties($, { main: $.noOp})
-
-  $.extend(window, 'onload', function() {
-    var body = document.getElementsByTagName("body")[0]
-
-    $.extend(body, 'onkeypress', $dispatch('keyPressed'))
-
-    $.screen = body
-
-    _.addElementsToDom(_screen.d, _.uiElements)
-
-    $.main()
-
-    $dispatch.receiveEvent('pageLoaded')
-  })
-  */
 
   return $
 })()
