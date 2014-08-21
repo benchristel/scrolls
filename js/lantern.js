@@ -9,20 +9,18 @@ var Lantern = (function($) {
 
   return ($.makeObject = function(base) {
     var api = base || {},
-        internal = {},
+        internal = Object.create(api),
         modules = []
 
     api.mod = api.mod || function() {
-      var module,
-          sup = {},
-          internalSup = {}
+      var i, module, sup = {}
 
-      for(var i = 0; i < arguments.length; i++) {
+      for(i = 0; i < arguments.length; i++) {
         module = arguments[i]
         if(modules.indexOf(module) === -1) {
-          copyMethods(internal, internalSup)
+          copyMethods(internal, sup)
           copyMethods(api, sup)
-          module.call(null, api, internal, sup, internalSup)
+          module.call(null, api, internal, sup)
           modules.push(module)
         }
       }
@@ -404,7 +402,7 @@ Lantern.mod(function($, $internal) {
 
   $internal.makeRelativePositionedElement = $.createModule(
     $.makeUiElement,
-    function(self, shared, __, inherited) {
+    function(self, shared, inherited) {
       shared.asCss = function() {
         var css = inherited.asCss()
         css.position = 'relative'
@@ -441,7 +439,7 @@ Lantern.mod(function($, $internal) {
 })
 
 Lantern.mod(function($, $shared) {
-  $.background = $.makeUiElement().mod(function(self, shared, __, inherited) {
+  $.background = $.makeUiElement().mod(function(self, shared, inherited) {
     shared.asCss = function() {
       var css = inherited.asCss()
       delete css.height

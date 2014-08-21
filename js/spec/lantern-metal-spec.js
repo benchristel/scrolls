@@ -56,37 +56,45 @@ describe('Lantern', function() {
                 expect(this.object.foo).toEqual('quaxxor')
             })
 
-            it('passes the object, private container, super of the object, and super of the private container to the module function', function() {
-                this.object.mod(function(self, _self, original, _original) {
-                    self.getSecret = function() { return _self.secret }
-                    _self.secret = 'be sure to drink your ovaltine'
+            it('yields a container for published fields as the first argument', function() {
+                this.object.mod(function(published) {
+                    published.areTestsPassing = 'yes they are'
                 })
 
-                expect(this.object.secret).toBe(undefined)
-                expect(this.object.getSecret()).toBe('be sure to drink your ovaltine')
+                expect(this.object.areTestsPassing).toEqual('yes they are')
             })
 
-            it('allows methods defined in the function passed to mod to call super methods', function() {
-                this.object.mod(function(self, _self) {
-                    self.getSecret = function() { return "From the depths of my soul: " + _self.getSecret() }
-                    _self.getSecret = function() { return _self.secret }
-                    _self.secret = 'be sure to drink your ovaltine'
-                })
+            it('yields a container for shared and published fields as the second argument', function() {
+                this.object.mod(function(published, self) {
+                    self.government = 'communism'
+                    published.interjection = 'Hooray '
 
-                expect(this.object.secret).toBe(undefined)
-                expect(this.object.getSecret()).toEqual('From the depths of my soul: be sure to drink your ovaltine')
-
-                this.object.mod(function(self, _self, sup, _sup) {
-                    self.getSecret = function() {
-                        return 'From ages past: ' + sup.getSecret()
-                    }
-
-                    _self.getSecret = function() {
-                        return _sup.getSecret().toUpperCase()
+                    published.cheer = function() {
+                        return self.interjection + self.government + '!'
                     }
                 })
 
-                expect(this.object.getSecret()).toEqual('From ages past: From the depths of my soul: BE SURE TO DRINK YOUR OVALTINE')
+                expect(this.object.government).toBe(undefined)
+                expect(this.object.cheer()).toBe('Hooray communism!')
+            })
+
+            it('yields a container for inherited fields as the third argument', function() {
+                this.object.mod(function(published, self, inherited) {
+                    self.secret_reasons = function() {
+                        return 'fear of the unknown'
+                    }
+                    published.reasons = function() {
+                        return 'tradition'
+                    }
+                })
+
+                this.object.mod(function(published, self, inherited) {
+                    published.reasons = function() {
+                        return inherited.reasons() + ' and ' + inherited.secret_reasons()
+                    }
+                })
+
+                expect(this.object.reasons()).toEqual('tradition and fear of the unknown')
             })
         })
     })
@@ -107,14 +115,14 @@ describe('Lantern', function() {
         })
 
         it('can define a module with dependencies on other modules', function() {
-            var defineFoo = Lantern.createModule(function(target, _target) {
-                _target.foo = function() { return 1 }
+            var defineFoo = Lantern.createModule(function(published, self) {
+                self.foo = function() { return 1 }
             })
 
             var publicizeFoo = Lantern.createModule(
                 defineFoo,
-                function(target, _target, sup, _sup) {
-                    target.foo = function() { return "Foo is " + _sup.foo() }
+                function(published, self, inherited) {
+                    published.foo = function() { return "Foo is " + inherited.foo() }
                 }
             )
 
