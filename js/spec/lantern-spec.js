@@ -36,9 +36,9 @@ describe("Lantern modules", function() {
             they("are settable and gettable", function() {
                 var obj = $.makePropertyChangeEvents(Lantern.makeObject())
 
-                obj.mod(function(self, _self) {
-                    _self.defineProperty('foo', 1)
-                    _self.defineProperty('greeting', "hi")
+                obj.mod(function(published, self) {
+                    self.defineProperty('foo', 1)
+                    self.defineProperty('greeting', "hi")
                 })
 
                 expect(obj.foo).toBe(1)
@@ -46,6 +46,22 @@ describe("Lantern modules", function() {
                 obj.foo = 2
                 expect(obj.foo).toBe(2)
                 expect(obj.greeting).toEqual("hi")
+            })
+
+            they("are public regardless of whether they are set on the published or shared facet", function() {
+                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
+
+                obj.mod(function(pub, self) {
+                    self.defineProperty('a', 'a1')
+                    self.defineProperty('b', 'b1')
+
+                    pub.a = 'a2'
+                    self.b = 'b2' // this calls the setter method on the prototype of `self`, which is `pub`.
+                                  // TODO: figure out if this is actually ECMAScript-specified behavior, or just Google
+                })
+
+                expect(obj.a).toEqual('a2')
+                expect(obj.b).toEqual('b2')
             })
         })
     })

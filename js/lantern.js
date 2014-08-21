@@ -342,8 +342,6 @@ Lantern.mod(function($, $internal) {
         , height: 50
         , width:  100
         , visible: true
-        , fontSize: 20
-        , textColor: 'black'
         , color: 'white'
         , borderWidth: 1
         , borderColor: 'lightGray'
@@ -415,16 +413,22 @@ Lantern.mod(function($, $internal) {
 
   $internal.makeTextContainerElement = $.createModule(
     $.makeUiElement,
-    function(api, shared, inherited) {
-      shared.defineProperty('text', '')
+    function(api, self, inherited) {
+      $.forAllPropertiesOf(
+        { text: ''
+        , fontSize: 20
+        , textColor: 'black'
+        },
+        self.defineProperty
+      )
 
       api.redraw = function() {
         inherited.redraw()
-        shared.domElement.innerHTML = shared.getDisplayText()
+        self.domElement.innerHTML = self.getDisplayText()
       }
 
-      shared.getDisplayText = function() {
-        return api.text
+      self.getDisplayText = function() {
+        return self.text
       }
     }
   )
