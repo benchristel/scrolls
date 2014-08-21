@@ -1,0 +1,31 @@
+---
+title: "Demo: Win Button"
+linktext: "Demo: Win Button"
+permalink: /demo/win-button/
+layout: demo
+---
+
+var winButton = $.createButton()
+var buttonSize = 100
+
+winButton.left = Math.random() * 900
+winButton.top = Math.random() * 500
+
+winButton.width = buttonSize
+winButton.height = buttonSize
+winButton.color = 'white'
+winButton.textColor = 'white'
+winButton.borderColor = 'white'
+winButton.text = 'Click me'
+
+var changeColor = function() {
+    winButton.color = 'blue'
+}
+
+var changeText = function() {
+    winButton.text = 'You win!'
+}
+
+winButton.whenMouseEnters(changeColor)
+winButton.whenClicked(changeText)
+
