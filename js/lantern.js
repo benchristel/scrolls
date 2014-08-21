@@ -314,21 +314,20 @@ Lantern.mod(function($, $internal) {
         el.onmousemove = function() { api.fireEvent('mouseMoves') }
         el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
-        // BUG: if this is uncommented, clicking a button and then pressing a key while the button is focused will remove the portal from the screen. WHYYYY
-        //el.onkeyup = function() {
-        //  shared.withoutRedrawing(function() {
-        //    api.fireEvent('inputMayHaveChanged')
-        //  })
-        //  api.fireEvent('keyReleased')
-        //  api.redraw()
-        //}
-        //el.onchange = function() {
-        //  shared.withoutRedrawing(function() {
-        //    api.fireEvent('inputMayHaveChanged')
-        //  })
-        //  api.fireEvent('changed')
-        //  api.redraw()
-        //}
+        el.onkeyup = function() {
+          shared.withoutRedrawing(function() {
+            api.fireEvent('inputMayHaveChanged')
+          })
+          api.fireEvent('keyReleased')
+          api.redraw()
+        }
+        el.onchange = function() {
+          shared.withoutRedrawing(function() {
+            api.fireEvent('inputMayHaveChanged')
+          })
+          api.fireEvent('changed')
+          api.redraw()
+        }
       }
 
       shared.withoutRedrawing = function(fn) {
@@ -345,7 +344,6 @@ Lantern.mod(function($, $internal) {
         , height: 50
         , width:  100
         , visible: true
-        , text: ''
         , fontSize: 20
         , textColor: 'black'
         , color: 'white'
@@ -359,16 +357,11 @@ Lantern.mod(function($, $internal) {
       )
 
       api.redraw = function () {
-        shared.setText(api.text)
         shared.setAttributes(shared.htmlAttributes())
         shared.setEventHandlers() // TODO: is this line needed?
       }
 
       api.registerEventHandler('propertyChanged', function() { api.redraw() })
-
-      shared.setText = function(value) {
-        shared.domElement.innerHTML = value //$.htmlEscape(value)
-      }
 
       shared.setAttributes = function(attrs) {
         $.forAllPropertiesOf(attrs, function(name, value) {
@@ -422,8 +415,24 @@ Lantern.mod(function($, $internal) {
     }
   )
 
+  $internal.makeTextContainerElement = $.createModule(
+    $.makeUiElement,
+    function(api, shared, inherited) {
+      shared.defineProperty('text', '')
+
+      api.redraw = function() {
+        inherited.redraw()
+        shared.domElement.innerHTML = shared.getDisplayText()
+      }
+
+      shared.getDisplayText = function() {
+        return api.text
+      }
+    }
+  )
+
   $.createButton = function() {
-    var button = $.makeUiElement({tag: 'button'})
+    var button = $internal.makeTextContainerElement({tag: 'button'})
     $internal.uiElements.push(button)
     button.appendTo($.portal)
     button.redraw()
@@ -466,182 +475,5 @@ Lantern.mod(function($, $shared) {
   }
 })
 
-var Lantern2 = Lantern
-
-var Lantern = (function (undefined) {
-  var $additions = {} // the prototype of Lantern, to which clients can add their own gizmos
-
-  var $ = Object.create($additions) // the Lantern zygote
-  var _ = {} // container for private properties
-  var $private = _
-  var $public  = $
-
-  $.additions = $additions
-
-  var $publicConst = function (properties) {
-    eachProperty(properties, function(k, v) {
-      Object.defineProperty($, k, {writable: false, value: v})
-    })
-  }
-
-  $public.settings = {}
-  $public.settings.framesPerSecond = 60
-  $public.settings.screen = null // the DOM element where Lantern controls will be placed
-                                 // TODO: shouldn't this be private?
-
-  $public.COLOR =
-    { black: '#000'
-    , white: '#fff'
-    , gray:  '#808080'
-    , lightGray: '#c0c0c0'
-    , darkGray:  '#404040'
-    , red:     '#f00'
-    , green:   '#0f0'
-    , blue:    '#00f'
-    , yellow:  '#ff0'
-    , cyan:    '#0ff'
-    , magenta: '#f0f'
-    }
-
-  $public.htmlEscape = function(s) {
-    return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-  }
-
-  $public.htmlUnescape = function(s) {
-    return String(s)
-        .replace(/&gt;/g,   '>')
-        .replace(/&lt;/g,   '<')
-        .replace(/&quot;/g, '"')
-        .replace(/&amp;/g,  '&')
-  }
-
-  // Array utility functions
-
-  $public.copy = function(thing) {
-    var copy
-    if ($.isArray(thing)) {
-      copy = thing.slice(0)
-    } else if ($.isObject(thing)) {
-      copy = {}
-      $.forAllPropertiesOf(thing, function(name, val) {
-        copy[name] = val
-      })
-    }
-    return copy
-  }
-
-  $public.replace = function(array, newContents) {
-    array.length = 0
-    Array.prototype.push.apply(array, newContents)
-    return array
-  }
-
-  $public.sum = function(array) {
-    var sum = 0
-    $.forAll(array, function(x) {
-      sum += x
-    })
-    return sum
-  }
-
-  $public.repeat = function(nTimes, fn) {
-    fn = $.init(fn, $.identity)
-    var count = 0
-    while (count < nTimes) {
-      fn(count++)
-    }
-  }
-
-  $public.generate = function(n, fn) {
-    var generated = new Array(n)
-    $.repeat(n, function(i) { generated[i] = fn() })
-    return generated
-  }
-
-  $public.clear = function(array) {
-    array.length = 0
-    return array
-  }
-
-  $public.everySecond = function(fn) { return window.setInterval(fn, 1000) }
-
-  // UI
-  $public.clearScreen = function() {
-    _.resetTurtle()
-    _.removeAllElementsFromDom()
-    $.clear(_.uiElements)
-  }
-
-  $private.turtleX = 0
-  $private.turtleY = 0
-  $private.resetTurtle = function() { _.turtleX = _.turtleY = 0 }
-  $private.uiElements = []
-  $private.appendToScreen = function(elem) {
-    _.uiElements.push(elem)
-    _.addElementsToDom($.screen, [elem])
-  }
-
-  $private.removeAllElementsFromDom = function() {
-    if (!$.screen || !$.isArray(_.uiElements)) return
-    $.forAll(_.uiElements, function(elem) {
-      $.screen.removeChild(elem)
-    })
-  }
-
-  $private.nextId = 0
-  $private.generateHtmlId = function(prefix) {
-    prefix = $.init(prefix, 'lantern-element-')
-    return String(prefix) + _.nextId++
-  }
-
-  // ----------- //
-  // UI ELEMENTS //
-  // ----------- //
-
-  $public.createButton = function() {
-    var self = _.createUiElement({tag: 'button'})
-
-    self.cursor = 'pointer'
-
-    return self
-  }
-
-  $public.createTextDisplay = function() {
-    var self = _.createUiElement({tag: 'div'})
-
-    return self
-  }
-
-  $public.createTextInput = function() {
-    var self = _.createUiElement({tag: 'input'}, function(self, secret) {
-      secret.setText = function(value) {
-        if (secret.domElement.value !== value) {
-          secret.domElement.value = value
-        }
-      }
-
-      var updateTextAttributeFromInput = function() {
-        if (self.text !== secret.domElement.value) {
-          self.text = secret.domElement.value
-          secret.dispatch.receiveEvent('inputChanged')
-        }
-
-      }
-
-      secret.dispatch.register({ inputMayHaveChanged:  updateTextAttributeFromInput})
-    })
-
-    return self
-  }
-
-  return $
-})()
-
 Lantern.$noConflict = $
-Object.freeze(Lantern)
-var $ = Lantern2
-var Lantern = Lantern2
+var $ = Lantern
