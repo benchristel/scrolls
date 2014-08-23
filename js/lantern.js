@@ -1,27 +1,27 @@
 "use strict"
 
-// KERNEL
+// METAL
 
 var Lantern = (function($) {
-  var copyMethods = function(from, to, fn) {
-    for (var k in from) if (typeof from[k] === 'function') to[k] = from[k]
+  var copyMethods = function(src, dest) {
+    for (var k in src) if (typeof src[k] === 'function') dest[k] = src[k]
   }
 
   return ($.makeObject = function(base) {
     var api = base || {},
         internal = Object.create(api),
-        modules = []
+        installedModules = []
 
     api.mod = api.mod || function() {
-      var i, module, sup = {}
+      var i, thisModule, sup = {}
 
       for(i = 0; i < arguments.length; i++) {
-        module = arguments[i]
-        if(modules.indexOf(module) === -1) {
+        thisModule = arguments[i]
+        if(installedModules.indexOf(thisModule) === -1) {
           copyMethods(internal, sup)
           copyMethods(api, sup)
-          module.call(null, api, internal, sup)
-          modules.push(module)
+          thisModule.call(null, api, internal, sup)
+          installedModules.push(thisModule)
         }
       }
 
@@ -44,7 +44,7 @@ Lantern.mod(function($) {
       object = $.makeObject(object)
 
       if (!$.isFunction(object.mod)) {
-        throw new Error("You tried to mod an object that doesn't have an .mod method. Only objects created with Lantern.createObject can be modded")
+        throw new Error("You tried to mod an object that doesn't have a .mod method. Only objects created with Lantern.createObject can be modded")
       }
 
       $.forAll(moduleDefinitions, function(definition) {
@@ -107,7 +107,6 @@ Lantern.mod(function($) {
     return array
   }
 
-  // Call
   $.call = function(fn, args) {
     if ($.isFunction(fn)) {
       return fn.apply(null, args)
@@ -117,42 +116,42 @@ Lantern.mod(function($) {
 
 // EVENT DISPATCH
 
-$.makeEvents = $.createModule(function($target, _target) {
-  $target.fireEvent = function(event, data) {
-    $.forAll(_target.callbacksFor(event), function(handler) {
+$.makeEvents = $.createModule(function(api, self) {
+  api.fireEvent = function(event, data) {
+    $.forAll(self.callbacksFor(event), function(handler) {
       $.call(handler, [event, data])
     })
   }
 
-  $target.registerEventHandler = function(event, handler) {
-    _target.callbacksFor(event).push(handler)
+  api.registerEventHandler = function(event, handler) {
+    self.callbacksFor(event).push(handler)
   }
 
-  $target.removeEventHandler = function(event, handler) {
-    $.remove(handler, _target.callbacksFor(event))
+  api.removeEventHandler = function(event, handler) {
+    $.remove(handler, self.callbacksFor(event))
   }
 
-  $target.clearEventHandlers = function(event) {
-    _target.callbacksFor(event).length = 0
+  api.clearEventHandlers = function(event) {
+    self.callbacksFor(event).length = 0
   }
 
-  _target.eventCallbacks = {}
-  _target.callbacksFor = function(event) {
-    _target.eventCallbacks[event] = _target.eventCallbacks[event] || []
-    return _target.eventCallbacks[event]
+  self.eventCallbacks = {}
+  self.callbacksFor = function(event) {
+    self.eventCallbacks[event] = self.eventCallbacks[event] || []
+    return self.eventCallbacks[event]
   }
 
-  _target.registrarFor = function(event) {
+  self.registrarFor = function(event) {
     var registrar = function(handler) {
-      $target.registerEventHandler(event, handler)
+      self.registerEventHandler(event, handler)
     }
 
     registrar.doNot = function(handler) {
-      $target.removeEventHandler(event, handler)
+      self.removeEventHandler(event, handler)
     }
 
     registrar.doNothing = function() {
-      $target.clearEventHandlers(event)
+      self.clearEventHandlers(event)
     }
 
     return registrar
@@ -161,9 +160,9 @@ $.makeEvents = $.createModule(function($target, _target) {
 
 // PROPERTIES
 
-$.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, shared) {
-  var props = shared.propertyValues = {}
-  shared.defineProperty = function(name, value) {
+$.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, self) {
+  var props = self.propertyValues = {}
+  self.defineProperty = function(name, value) {
     props[name] = value
     var descriptor =
         { enumerable:   true
@@ -172,15 +171,15 @@ $.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, shared) 
         , set: function(newValue) {
             var oldValue = props[name]
             props[name] = newValue
-            $.call(api.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
+            $.call(self.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
           }
         }
     Object.defineProperty(api, name, descriptor)
   }
 })
 
-$.makeAliasedProperties = $.createModule(function(api, shared) {
-  shared.aliasProperty = function(alias, name) {
+$.makeAliasedProperties = $.createModule(function(api, self) {
+  self.aliasProperty = function(alias, name) {
     var descriptor =
         { enumerable:   false
         , configurable: false
@@ -191,9 +190,9 @@ $.makeAliasedProperties = $.createModule(function(api, shared) {
   }
 })
 
-$.makeConstants = $.createModule(function(api, shared) {
-  var constants = shared.constantValues = {}
-  shared.defineConstant = function(name, value) {
+$.makeConstants = $.createModule(function(api, self) {
+  var constants = self.constantValues = {}
+  self.defineConstant = function(name, value) {
     constants[name] = value
     var descriptor =
         { enumerable:   true
@@ -282,30 +281,30 @@ Lantern.mod(function($, $internal) {
       $.makeConstants,
       $.makePositionable,
       $.makePropertyChangeEvents,
-    function(api, shared) {
-      shared.domElement = document.createElement(api.tag || 'div') //addElement(api.tag)
+    function(api, self) {
+      self.domElement = document.createElement(api.tag || 'div') //addElement(api.tag)
 
       api.appendChild = function(childDomElement) {
-        shared.domElement.appendChild(childDomElement)
+        self.domElement.appendChild(childDomElement)
       }
       api.appendTo = function(parent) {
-        parent.appendChild(shared.domElement)
+        parent.appendChild(self.domElement)
       }
 
       $.forAllPropertiesOf(
-        { whenClicked:             shared.registrarFor('clicked')
-        , whenMouseEnters:         shared.registrarFor('mouseEnters')
-        , whenMouseLeaves:         shared.registrarFor('mouseLeaves')
-        , whenMouseMoves:          shared.registrarFor('mouseMoves')
-        , whenKeyPressed:          shared.registrarFor('keyPressed')
-        , whenKeyReleased:         shared.registrarFor('keyReleased')
-        , whenInputChanged:        shared.registrarFor('inputChanged')
+        { whenClicked:             self.registrarFor('clicked')
+        , whenMouseEnters:         self.registrarFor('mouseEnters')
+        , whenMouseLeaves:         self.registrarFor('mouseLeaves')
+        , whenMouseMoves:          self.registrarFor('mouseMoves')
+        , whenKeyPressed:          self.registrarFor('keyPressed')
+        , whenKeyReleased:         self.registrarFor('keyReleased')
+        , whenInputChanged:        self.registrarFor('inputChanged')
         },
-        shared.defineConstant
+        self.defineConstant
       )
 
-      shared.setEventHandlers = function(attrs) {
-        var el = shared.domElement
+      self.setEventHandlers = function(attrs) {
+        var el = self.domElement
         el.onclick     = function() { api.fireEvent('clicked') }
         el.onmouseover = function() { api.fireEvent('mouseEnters') }
         el.onmouseout  = function() { api.fireEvent('mouseLeaves') }
@@ -313,22 +312,23 @@ Lantern.mod(function($, $internal) {
         el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
         el.onkeyup = function() {
-          shared.withoutRedrawing(function() {
+          self.withoutRedrawing(function() {
             api.fireEvent('inputMayHaveChanged')
           })
           api.fireEvent('keyReleased')
           api.redraw()
         }
         el.onchange = function() {
-          shared.withoutRedrawing(function() {
+          self.withoutRedrawing(function() {
             api.fireEvent('inputMayHaveChanged')
           })
           api.fireEvent('changed')
           api.redraw()
         }
       }
+      self.setEventHandlers()
 
-      shared.withoutRedrawing = function(fn) {
+      self.withoutRedrawing = function(fn) {
         var old = api.redraw
         api.redraw = $.noOp
         fn()
@@ -349,31 +349,30 @@ Lantern.mod(function($, $internal) {
         , cursor: 'auto'
         , data: {} // this property is not used by Lantern; it's for the user to store their own data
         },
-        shared.defineProperty
+        self.defineProperty
       )
 
       api.redraw = function () {
-        shared.setAttributes(shared.htmlAttributes())
-        shared.setEventHandlers() // TODO: is this line needed?
+        self.setAttributes(self.htmlAttributes())
       }
 
       api.registerEventHandler('propertyChanged', function() { api.redraw() })
 
-      shared.setAttributes = function(attrs) {
+      self.setAttributes = function(attrs) {
         $.forAllPropertiesOf(attrs, function(name, value) {
-          shared.domElement.setAttribute(name, value)
+          self.domElement.setAttribute(name, value)
         })
       }
 
-      shared.htmlAttributes = function() {
+      self.htmlAttributes = function() {
         return {
-          style: shared.toCss()
+          style: self.toCss()
         , id: api.id
         }
       }
 
-      shared.toCss = function() { return toCss(shared.asCss()) }
-      shared.asCss = function() {
+      self.toCss = function() { return toCss(self.asCss()) }
+      self.asCss = function() {
         var css =
           { 'top'    : toNumericString(api.top)+'px'
           , 'left'   : toNumericString(api.left)+'px'
