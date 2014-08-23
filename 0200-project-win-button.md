@@ -3,6 +3,7 @@ layout: page
 title: "Project 1: The Win Button"
 linktext: "Project: Win Button"
 permalink: /project/win-button/
+categories: ['project']
 ---
 
 Greetings! In this tutorial, we'll walk through building a very, *very* simple game. The game is literally just a button that says "you win" when you click it. The twist is that the button is in a random location on the screen, and it's hidden until you move your mouse over it. My version looks like [this]({{site.baseurl}}/demo/win-button/).

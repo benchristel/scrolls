@@ -1,8 +1,44 @@
 <nav class="site-nav">
   <ul>
-  	{% assign sorted_pages = site.pages | sort:"name" %}
-  	{% for page in sorted_pages %}
-      <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
-    {% endfor %}
+    {% assign sorted_pages = site.pages | sort:"name" %}
+    <li>
+      <ol>
+	{% for page in sorted_pages %}
+	  {% if page.categories contains 'intro' %}
+	    <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
+	  {% endif %}
+	{% endfor %}
+      </ol>
+    </li>
+    <li>
+      <h1>Practice</h1>
+      <ol>
+	{% for page in sorted_pages %}
+	  {% if page.categories contains 'project' %}
+	    <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
+	  {% endif %}
+	{% endfor %}
+      </ol>
+    </li>
+    <li>
+      <h1>Demos</h1>
+      <ol>
+	{% for page in sorted_pages %}
+	  {% if page.categories contains 'demo' %}
+	    <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
+	  {% endif %}
+	{% endfor %}
+      </ol>
+    </li>
+    <li>
+      <h1>Essays</h1>
+      <ol>
+	{% for page in sorted_pages %}
+	  {% if page.categories contains 'essay' %}
+	    <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
+	  {% endif %}
+	{% endfor %}
+      </ol>
+    </li>
   </ul>
 </nav>
