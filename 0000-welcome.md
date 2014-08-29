@@ -26,8 +26,18 @@ You'll also want a code editing program like [Komodo Edit](http://www.activestat
 
 I'll assume you know how to download files from the Web, find them in your system, and open them in various applications. You should also be able to _right-click_ things. If you're on a Windows machine, you almost certainly have a two-button mouse or trackpad, so right-clicking just means clicking with the rightmost button on your mouse. If you have a Mac with a one-button mouse or trackpad, you can simulate a right-click by clicking while holding down the `control` key.
 
-What you'll need
-----------------
+The Paths
+---------
+
+There are many paths to programming mastery, none more correct than any other. This book is divided into three paths: the **Workshop**, the **Laboratory**, and the **Library**. The Workshop contains step-by-step guides to building several simple games from scratch. In the Laboratory, you'll find working versions of each of those games that you can modify, experiment with, or compare with the code you wrote in the workshop. The Library contains many pages describing in detail how JavaScript works, for those who are curious about what's going on behind the scenes when they run a program. There are also pages on the philosophy of programming, with examples of how you can make your code easier to read, write, and debug. Each path can be read on its own from start to finish, or you can combine them to your liking.
+
+Click the `settings` menu next to the URL bar of your browser window, and select `Tools > Javascript Console`. This will pop open a panel at the bottom of the browser. This panel is the Javascript Console, and it's a window into the inner workings of the webpage. From here, you can issue commands that make the browser do stuff.
+
+```javascript
+alert("")
+```
+
+
 
 FAQ
 ---

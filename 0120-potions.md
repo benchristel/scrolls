@@ -3,7 +3,7 @@ layout: page
 title: 'JavaScript Functions'
 linktext: Potions Class
 permalink: /potions/
-categories: ['intro']
+categories: []
 ---
 
 So far, we've been working with one-line commands like these:
