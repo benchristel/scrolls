@@ -1,19 +1,19 @@
 .highlight { color:#333 }
-.highlight .html .cp { color:#888 } /* e.g. <!DOCTYPE> */
-.highlight .html .nt { color:#00f } /* tags, e.g. <div></div> */
-.highlight .html .na { color:#606 } /* attribute names */
-.highlight .html .s  { color:#008 } /* attribute values */
-.highlight .html       .c1,
-.highlight .javascript .c1 { color:#888 } /* Javascript comments */
-.highlight .html       .s2,
-.highlight .javascript .s2 { color:#04a } /* Javascript strings */
-.highlight .html       .mi,
-.highlight .javascript .mi { color:#c00 } /* Javascript numbers */
-.highlight .html       .nx,
-.highlight .javascript .nx { color:#333 } /* Javascript identifiers */
-.highlight .html       .k,
-.highlight .javascript .k,
-.highlight .html       .kd,
-.highlight .javascript .kd { color:#a0a } /* Javascript keywords */
-.highlight .html       .p,
-.highlight .javascript .p  { color:#000; } /* operators */
+.highlight .language-html .cp { color:#888 } /* e.g. <!DOCTYPE> */
+.highlight .language-html .nt { color:#00f } /* tags, e.g. <div></div> */
+.highlight .language-html .na { color:#606 } /* attribute names */
+.highlight .language-html .s  { color:#008 } /* attribute values */
+.highlight .language-html       .c1,
+.highlight .language-javascript .c1 { color:#888 } /* Javascript comments */
+.highlight .language-html       .s2,
+.highlight .language-javascript .s2 { color:#04a } /* Javascript strings */
+.highlight .language-html       .mi,
+.highlight .language-javascript .mi { color:#c00 } /* Javascript numbers */
+.highlight .language-html       .nx,
+.highlight .language-javascript .nx { color:#333 } /* Javascript identifiers */
+.highlight .language-html       .k,
+.highlight .language-javascript .k,
+.highlight .language-html       .kd,
+.highlight .language-javascript .kd { color:#a0a } /* Javascript keywords */
+.highlight .language-html       .p,
+.highlight .language-javascript .p  { color:#000; } /* operators */
