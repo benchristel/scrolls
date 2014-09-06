@@ -390,7 +390,6 @@ Lantern.mod(function($, $internal) {
           , 'overflow-x' : 'hidden'
           , 'overflow-y' : (api.scrollable ? 'auto' : 'hidden')
           , 'cursor' : api.cursor
-          , 'z-index' : -1
           }
         return css
       }
@@ -442,33 +441,26 @@ Lantern.mod(function($, $internal) {
 })
 
 Lantern.mod(function($, $shared) {
-  $.background = $.makeUiElement().mod(function(self, shared, inherited) {
-    shared.asCss = function() {
-      var css = inherited.asCss()
-      delete css.height
-      css.width = '100%'
-      css.top = '0'
-      css.bottom = '0'
-      css.border = 'none'
-      return css
-    }
-  })
-  $.background.id = 'lantern-background'
-  $.background.color = 'black'
+  $.portalize = function(container) {
+    $.background = $.makeUiElement().mod(function(self, shared, inherited) {
+      shared.asCss = function() {
+        var css = inherited.asCss()
+        delete css.height
+        css.width = '100%'
+        css.top = '0'
+        css.bottom = '0'
+        css.border = 'none'
+        return css
+      }
+    })
+    $.background.id = 'lantern-background'
+    $.background.color = 'black'
 
-  $.portal = $shared.makeRelativePositionedElement()
-  $.portal.top = 50
-  $.portal.width = 1000
-  $.portal.height = 600
-  $.portal.id = 'lantern-portal'
-  $.portal.appendTo($.background)
+    $.portal = $shared.makeRelativePositionedElement()
+    $.portal.id = 'lantern-portal'
+    $.portal.appendTo($.background)
 
-  var oldOnload = window.onload
-  window.onload = function() {
-    if(oldOnload) oldOnload.apply(window, arguments)
-    var body = document.getElementsByTagName('body')[0]
-    body.setAttribute('style', 'padding:0;margin:0')
-    $.background.appendTo(body)
+    $.background.appendTo(container)
 
     $.forAll($shared.uiElements, function(elem) {
       elem.appendTo($.portal)
