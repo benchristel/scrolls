@@ -8,7 +8,7 @@ categories: ['project']
 
 Every website you visit has code behind it that controls how the site looks and behaves. The Chrome web browser (and most other web browsers) give you tools to tinker with this code.
 
-To get to those tools, click the menu icon to the right of the URL bar. Select the `Tools > JavaScript Console` menu. You'll see a panel pop up at the bottom of the browser. This is the JavaScript Console, which lets you converse with the computer (in code, of course). You can ask it questions or give it commands.
+To get to those tools, click the menu icon to the right of the URL bar and select the `Tools > JavaScript Console` menu. You'll see a panel pop up at the bottom of the browser. This is the JavaScript Console, which lets you converse with the computer (in code, of course). You can ask it questions or give it commands.
 
 For example, if you type in the command below and hit enter, the computer will pop up an alert box on the screen.
 
@@ -22,7 +22,13 @@ Alternatively, you could ask it how many pixels wide the browser window is:
 window.innerWidth
 ```
 
-The computer replies to everything you say in this chat-like conversation. If you use `alert`, as in the first example, it responds with `undefined`, which is its way of silently doing your bidding. If you ask it a question, it responds with the answer. For example, my computer kindly informs me that my `window.innerWidth` is `1440` pixels.
+Or what six times nine equals:
+
+```javascript
+6 * 9
+```
+
+The computer replies to everything you say in this chat-like conversation. If you use `alert`, as in the first example, its response is `undefined`&mdash;this is JavaScript's way of silently doing your bidding. If you ask it a question, it responds with the answer. For example, my computer informs me that `6 * 9` is `42`, and that my `window.innerWidth` is `1440` pixels.
 
 You'll also notice that the computer tries to help you out. If you type `window.inner`, it will suggest the completions `window.innerHeight` and `window.innerWidth`.
 
@@ -68,10 +74,10 @@ var quit = function() {
 var restart = startGame
 </script>
 
-I've added some code to this particular page to make it play a number-guessing game. You can start the game (and get more instructions) with this command:
+To demonstrate the power of the JavaScript console, I've added the code for a simple number-guessing game to this particular page. When you start the game, the computer picks a random number between 1 and 100 and lets you guess what the number is. It'll tell you if the guess is too high or too low and let you guess again until you get it right. You can start the game (and get more instructions) with this command:
 
 ```javascript
 startGame()
 ```
 
-Interestingly, there's a strategy that will let you win the game in 7 guesses or fewer, every time. I'll let you think about that for a bit. In the next chapter, you'll see how to build your own programs from sequences of JavaScript commands.
+Interestingly, there's a strategy that will let you win the game in 7 guesses or fewer, every time. I'll let you think for a bit about what it might be. In the next chapter, you'll see how to build your own programs from sequences of JavaScript commands.
