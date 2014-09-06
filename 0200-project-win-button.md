@@ -1,14 +1,18 @@
 ---
 layout: page
-title: "Project 1: The Win Button"
-linktext: "Project: Win Button"
-permalink: /project/win-button/
+title: "The Win Button"
+linktext: "Win Button"
+permalink: /workshop/win-button/
 categories: ['project']
 ---
 
-Greetings! In this tutorial, we'll walk through building a very, *very* simple game. The game is literally just a button that says "you win" when you click it. The twist is that the button is in a random location on the screen, and it's hidden until you move your mouse over it. My version looks like [this]({{site.baseurl}}/demo/win-button/).
+In this workshop, we'll walk through building a very, *very* simple game. The "game" is just a button that says "you win" when you click it. The twist is that the button is in a random location on the screen, and it's hidden until you move your mouse over it. My version looks like [this]({{site.baseurl}}/demo/win-button/).
 
 ## Getting started
+
+In the last chapter, we saw how to use the JavaScript console to give the computer commands and ask it questions. In order to write more sophisticated programs, like games, the JavaScript console isn't going to cut it. The console only lets us write one "sentence" (in computing terms, a *statement*) at a time, and we want to assemble sentences into paragraphs and complete stories. The easiest way to do that is to create our own webpage and add JavaScript code to it.
+
+Don't get *too* excited&emdash;the page we create won't be accessible on the web to anyone else, so you won't be able to send your friends a link to it just yet. We're going to create a file on your computer that describes a webpage in code, and tell Chrome to display that file. Here's the step-by-step guide:
 
 1. **Download the project template**<br/>
    Click [this link]({{site.baseurl}}/scrolls-of-the-apprentice-template) to download the project template file. Save it as `win-button.html`. You'll be editing this file to do the project.
@@ -20,11 +24,11 @@ Greetings! In this tutorial, we'll walk through building a very, *very* simple g
    Open the template file in Komodo, using the `File > Open > File...` menu.
 
 4. **Make sure the template displays in your browser**<br/>
-   Open the template file in Chrome, using the `File > Open File...` menu. If you see a white rectangle surrounded by black, you're good to go.
+   Switch back to Chrome, and open the template file using Chrome's `File > Open File...` menu. If you see a white rectangle surrounded by black, you're good to go.
 
 ## The code
 
-When you open the template file in Komodo Edit, it will look something like this, though probably with different colors:
+When you open the template file in Komodo Edit, it will look something like this:
 
 ```html
 <!DOCTYPE html>
@@ -38,20 +42,23 @@ When you open the template file in Komodo Edit, it will look something like this
 </script></head><body></body></html>
 ```
 
-Let's get a really simple program in here, just to check that everything's working. Change the file so it looks like this:
+Let's get a really simple program in here, just to check that everything's working. Add an `alert` command just below the block of comments, so the file looks like this:
 
 ```html
 <!DOCTYPE html>
 <html><head><title>Template of the Apprentice</title><script type="text/javascript", src="http://benchristel.github.io/scrolls/js/lantern.js"></script><script type="text/javascript">
 "use strict"
 
+// Your code goes here.
+// Lines beginning with two slashes are *comments*. The computer ignores them,
+// but you can use them to leave notes for yourself.
+
 alert("It's aliiiiive!")
 
 </script></head><body></body></html>
 ```
 
-In the example above, I've deleted the three lines of comments and added a JavaScript command, `alert("It's aliiiiive!")`. Refresh the template page in your browser, and a message box should pop up.
-
+Refresh the template page in your browser, and a message box should pop up.
 
 First, let's get a button on the screen.
 

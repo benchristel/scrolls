@@ -40,5 +40,15 @@
 	{% endfor %}
       </ol>
     </li>
+    <li>
+      <h1>Spellbooks</h1>
+      <ol>
+	{% for page in sorted_pages %}
+	  {% if page.categories contains 'spellbook' %}
+	    <li><a class="page-link" href="{{ page.url | prepend: site.baseurl }}">{{ page.linktext | truncate: 30 }}</a></li>
+	  {% endif %}
+	{% endfor %}
+      </ol>
+    </li>
   </ul>
 </nav>
