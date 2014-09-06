@@ -6,16 +6,14 @@ permalink: /
 categories: ['intro']
 ---
 
-_Scrolls of the Apprentice_ aims to teach wizardly computer programming to complete beginners. You'll learn the basics of **JavaScript**, the language that underlies almost every website in the Universe, and before long, you'll be creating games like [this](demo) and writing scary stuff like this:
+_Scrolls of the Apprentice_ aims to teach wizardly computer programming to complete beginners. You'll learn the basics of **JavaScript**, the language that underlies almost every website in the Universe, and before long, you'll be creating games like this:
 
-```javascript
-$.forAll(enemies,  function (enemy) {
-    smite(enemy)
-    if (enemy.hp === 0) {
-        console.log("Victory over " + enemy.name + "!")
-    }
-})
-```
+<div id="demo-container" style="position:relative;width:638px;height:360px;margin:30px 0 30px 0;"></div>
+<script type="text/javascript">
+Lantern.portalize(document.getElementById('demo-container'))
+Lantern.portal.width = 638
+Lantern.portal.height = 360
+</script>
 
 What you'll need
 ----------------

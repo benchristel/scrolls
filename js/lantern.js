@@ -458,6 +458,7 @@ Lantern.mod(function($, $shared) {
 
     $.portal = $shared.makeRelativePositionedElement()
     $.portal.id = 'lantern-portal'
+    $.portal.borderWidth = 0
     $.portal.appendTo($.background)
 
     $.background.appendTo(container)
