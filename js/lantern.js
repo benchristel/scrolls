@@ -263,12 +263,12 @@ Lantern.mod(function($, $internal) {
   }
 
   var toCss = function(obj) {
-    var ary = []
+    var formattedAttributes = []
     $.forAllPropertiesOf(obj, function(k, v) {
-      ary.push(k + ":" + v + ";")
+      formattedAttributes.push(k + ":" + v + ";")
     })
 
-    return ary.join("")
+    return formattedAttributes.join("")
   }
 
   var nextId = 0

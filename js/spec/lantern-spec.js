@@ -231,3 +231,20 @@ describe('Lantern UI', function() {
         })
     })
 })
+
+describe('Lantern Animations', function() {
+    beforeEach(function() { jasmine.clock().install() })
+    afterEach(function() { jasmine.clock().uninstall() })
+
+    xit('can animate an object property', function() {
+        jasmine.clock().install()
+        var duck = {speed: 0}
+        Lantern.animate(duck, 'speed').to(100).inMilliseconds(1000)
+        jasmine.clock().tick(100)
+        expect(duck.speed).toBe(10)
+        jasmine.clock().tick(400) // now 500ms have elapsed
+        expect(duck.speed).toBe(50)
+        jasmine.clock().tick(500) // now 1000ms have elapsed
+        expect(duck.speed).toBe(100)
+    })
+})
