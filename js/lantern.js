@@ -98,6 +98,11 @@ Lantern.mod(function($) {
     return object
   }
 
+  $.repeat = function(times, fn) {
+    var count = 0
+    while (count++ < times) fn(count)
+  }
+
   $.remove = function(item, array) {
     for (var i = array.length-1; i >= 0; i--) {
       if (array[i] === item) {
@@ -466,6 +471,53 @@ Lantern.mod(function($, $shared) {
     $.forAll($shared.uiElements, function(elem) {
       elem.appendTo($.portal)
     })
+  }
+})
+
+Lantern.makeEvents(Lantern)
+
+Lantern.mod(function($api, $) {
+  var msPerFrame = 10
+  var frameInterval = setInterval(function() {
+    $.fireEvent('frame')
+  }, 10)
+
+  $api.everyFrame = $.registrarFor('frame')
+
+  $api.startAnimation = function(object, property, target, duration) {
+    var from = object[property], to = target, elapsed = 0
+    var animator = $.makeEvents({
+      from: function(v) {
+        from = v
+        return animator
+      },
+      to: function(v) {
+        to = v
+        return animator
+      },
+      inMilliseconds: function(v) {
+        duration = v
+        return animator
+      }
+    }).mod(function(api, animator) {
+      api.andThen = animator.registrarFor('animationDone')
+    })
+
+    var updateAnimation = function() {
+      elapsed = elapsed + msPerFrame
+      object[property] = from + (to - from) * (elapsed / duration)
+      if ((to - from > 0 && object[property] >= to) ||
+          (to - from < 0 && object[property] <= to)
+         ) {
+        object[property] = to
+        $.everyFrame.doNot(updateAnimation)
+        animator.fireEvent('animationDone')
+      }
+    }
+
+    $.everyFrame(updateAnimation)
+
+    return animator
   }
 })
 

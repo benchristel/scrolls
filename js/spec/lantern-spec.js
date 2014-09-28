@@ -236,15 +236,27 @@ describe('Lantern Animations', function() {
     beforeEach(function() { jasmine.clock().install() })
     afterEach(function() { jasmine.clock().uninstall() })
 
-    xit('can animate an object property', function() {
-        jasmine.clock().install()
+    it('can animate an object property', function() {
         var duck = {speed: 0}
-        Lantern.animate(duck, 'speed').to(100).inMilliseconds(1000)
-        jasmine.clock().tick(100)
-        expect(duck.speed).toBe(10)
-        jasmine.clock().tick(400) // now 500ms have elapsed
-        expect(duck.speed).toBe(50)
-        jasmine.clock().tick(500) // now 1000ms have elapsed
-        expect(duck.speed).toBe(100)
+        $.startAnimation(duck, 'speed', 100, 40)
+        expect(duck.speed).toEqual(0)
+        $.fireEvent('frame') // 10 ms elapsed
+        expect(duck.speed).toEqual(25)
+        $.fireEvent('frame'); $.fireEvent('frame') // 30 ms elapsed
+        expect(duck.speed).toEqual(75)
+        $.fireEvent('frame') // 40 ms elapsed
+        expect(duck.speed).toEqual(100)
+        $.fireEvent('frame') // 50 ms elapsed
+        expect(duck.speed).toEqual(100)
+    })
+
+    it('triggers a callback when the animation completes', function() {
+        var duck = {speed: 0}, done = false
+        var announceDone = function() { done = true }
+        Lantern.startAnimation(duck, 'speed', 100, 40).andThen(announceDone)
+        $.repeat(3, function() { $.fireEvent('frame') })
+        expect(done).toBe(false)
+        $.fireEvent('frame')
+        expect(done).toBe(true)
     })
 })
