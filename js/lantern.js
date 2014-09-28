@@ -281,6 +281,14 @@ Lantern.mod(function($, $internal) {
     return 'lantern-element-'+(nextId++)
   }
 
+  $.IMAGE_RESIZE =
+    { FILL:        'fill'
+    , FIT:         'fit'
+    , STRETCH:     'stretch'
+    , TILE:        'tile'
+    , ACTUAL_SIZE: 'actualSize'
+    }
+
   $.makeUiElement = $.createModule(
       $.makeEvents,
       $.makeConstants,
@@ -293,7 +301,9 @@ Lantern.mod(function($, $internal) {
         self.domElement.appendChild(childDomElement)
       }
       api.appendTo = function(parent) {
-        parent.appendChild(self.domElement)
+        if (parent) {
+          parent.appendChild(self.domElement)
+        }
       }
 
       $.forAllPropertiesOf(
@@ -352,6 +362,8 @@ Lantern.mod(function($, $internal) {
         , borderColor: 'lightGray'
         , scrollable: false
         , cursor: 'auto'
+        , imageUrl: null
+        , imageResize: $.IMAGE_RESIZE.ACTUAL_SIZE
         , data: {} // this property is not used by Lantern; it's for the user to store their own data
         },
         self.defineProperty
@@ -379,24 +391,48 @@ Lantern.mod(function($, $internal) {
       self.toCss = function() { return toCss(self.asCss()) }
       self.asCss = function() {
         var css =
-          { 'top'    : toNumericString(api.top)+'px'
-          , 'left'   : toNumericString(api.left)+'px'
-          , 'height' : toNumericString(api.height)+'px'
-          , 'width'  : toNumericString(api.width)+'px'
-          , 'color'  : api.textColor //$.COLOR[target.textColor]
-          , 'background-color' : api.color //$.COLOR[target.color]
-          , 'display' : (api.visible ? 'block' : 'none')
-          , 'border-color' : api.borderColor //$.COLOR[target.borderColor]
-          , 'border-width' : toNumericString(api.borderWidth)+'px'
+          { 'top'    : toNumericString(self.top)+'px'
+          , 'left'   : toNumericString(self.left)+'px'
+          , 'height' : toNumericString(self.height)+'px'
+          , 'width'  : toNumericString(self.width)+'px'
+          , 'color'  : self.textColor //$.COLOR[target.textColor]
+          , 'background-color' : self.color //$.COLOR[target.color]
+          , 'display' : (self.visible ? 'block' : 'none')
+          , 'border-color' : self.borderColor //$.COLOR[target.borderColor]
+          , 'border-width' : toNumericString(self.borderWidth)+'px'
           , 'border-style' : 'solid'
           , 'position' : 'absolute'
-          , 'font-size' : toNumericString(api.fontSize)+'px'
+          , 'font-size' : toNumericString(self.fontSize)+'px'
           , 'white-space' : 'pre-wrap'
           , 'overflow-x' : 'hidden'
-          , 'overflow-y' : (api.scrollable ? 'auto' : 'hidden')
-          , 'cursor' : api.cursor
+          , 'overflow-y' : (self.scrollable ? 'auto' : 'hidden')
+          , 'cursor' : self.cursor
+          , 'background-image' : self.imageUrl ? "url('"+self.imageUrl+"')" : 'none'
+          , 'background-size' : self.getBackgroundSize()
+          , 'background-repeat' : self.getBackgroundRepeat()
+          , 'background-position' : 'center'
           }
         return css
+      }
+
+      self.getBackgroundSize = function() {
+        if (self.imageResize == $.IMAGE_RESIZE.ACTUAL_SIZE || self.imageResize == $.IMAGE_RESIZE.TILE)
+          return 'auto'
+        if (self.imageResize == $.IMAGE_RESIZE.FILL)
+          return 'cover'
+        if (self.imageResize == $.IMAGE_RESIZE.FIT)
+          return 'contain'
+        if (self.imageResize == $.IMAGE_RESIZE.STRETCH)
+          return '100% 100%'
+        var allowedValues = []
+        $.forAllPropertiesOf($.IMAGE_RESIZE, function(k,v) { allowedValues.push(v) })
+        throw "Unrecognized value for imageResize ("+self.imageResize+"). Try one of these: "+allowedValues.join(", ")
+      }
+
+      self.getBackgroundRepeat = function() {
+        if (self.imageResize == $.IMAGE_RESIZE.TILE)
+          return 'repeat'
+        return 'no-repeat'
       }
     }
   )
@@ -465,7 +501,6 @@ Lantern.mod(function($, $shared) {
     $.portal.id = 'lantern-portal'
     $.portal.borderWidth = 0
     $.portal.appendTo($.background)
-
     $.background.appendTo(container)
 
     $.forAll($shared.uiElements, function(elem) {
