@@ -124,7 +124,7 @@ Lantern.mod(function($) {
 $.makeEvents = $.createModule(function(api, self) {
   api.fireEvent = function(event, data) {
     $.forAll(self.callbacksFor(event), function(handler) {
-      $.call(handler, [event, data])
+      $.call(handler, [data])
     })
   }
 
@@ -364,6 +364,7 @@ Lantern.mod(function($, $internal) {
         , cursor: 'auto'
         , imageUrl: null
         , imageResize: $.IMAGE_RESIZE.ACTUAL_SIZE
+        , rotation: 0
         , data: {} // this property is not used by Lantern; it's for the user to store their own data
         },
         self.defineProperty
@@ -411,6 +412,7 @@ Lantern.mod(function($, $internal) {
           , 'background-size' : self.getBackgroundSize()
           , 'background-repeat' : self.getBackgroundRepeat()
           , 'background-position' : 'center'
+          , 'transform' : 'rotate('+(self.rotation||0)+'deg)'
           }
         return css
       }
@@ -426,7 +428,7 @@ Lantern.mod(function($, $internal) {
           return '100% 100%'
         var allowedValues = []
         $.forAllPropertiesOf($.IMAGE_RESIZE, function(k,v) { allowedValues.push(v) })
-        throw "Unrecognized value for imageResize ("+self.imageResize+"). Try one of these: "+allowedValues.join(", ")
+        throw "Unrecognized value ("+self.imageResize+") for imageResize. Try one of these: "+allowedValues.join(", ")
       }
 
       self.getBackgroundRepeat = function() {
@@ -445,6 +447,7 @@ Lantern.mod(function($, $internal) {
         css.position = 'relative'
         css['margin-left'] = 'auto'
         css['margin-right'] = 'auto'
+        delete css.transform
         return css
       }
     }
@@ -513,9 +516,14 @@ Lantern.makeEvents(Lantern)
 
 Lantern.mod(function($api, $) {
   var msPerFrame = 10
-  var frameInterval = setInterval(function() {
-    $.fireEvent('frame')
-  }, 10)
+  var prevFrameTime = Date.now()
+  var frameCallback = function() {
+    var now = Date.now()
+    $.fireEvent('frame', {secondsSinceLastFrame: (now - prevFrameTime) / 1000})
+    prevFrameTime = now
+    requestAnimationFrame(frameCallback)
+  }
+  var frameInterval = requestAnimationFrame(frameCallback)
 
   $api.everyFrame = $.registrarFor('frame')
 
