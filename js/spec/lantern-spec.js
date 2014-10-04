@@ -16,22 +16,6 @@ describe("Lantern modules", function() {
             })
         })
 
-        describe("the added defineProperty method", function() {
-            it("lets modules define properties that fire a propertyChanged event when set", function() {
-                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
-                obj.fire = function() {}
-                obj.mod(function(self, _self) {
-                    _self.defineProperty('foo', 1)
-                })
-
-                var spy = spyOn(obj, 'fireEvent')
-
-                obj.foo = 2
-
-                expect(spy).toHaveBeenCalledWith('propertyChanged', any(Object))
-            })
-        })
-
         describe("the defined properties", function() {
             they("are settable and gettable", function() {
                 var obj = $.makePropertyChangeEvents(Lantern.makeObject())
@@ -228,25 +212,158 @@ describe('Lantern UI', function() {
 
                 expect(called).toBe(true)
             })
+
+            it('has a text property that sets innerHTML', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.innerHTML).toEqual('')
+                    button.text = 'hi'
+                    expect(_.domElement.innerHTML).toEqual('hi')
+                })
+            })
+
+            it('has a color property that sets background-color', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.backgroundColor).toEqual('white')
+                    button.color = 'green'
+                    expect(_.domElement.style.backgroundColor).toEqual('green')
+                })
+            })
+
+            it('has a textColor property that sets css color', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.color).toEqual('black')
+                    button.textColor = 'red'
+                    expect(_.domElement.style.color).toEqual('red')
+                })
+            })
+
+            it('has a top property that sets css top', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.top).toEqual('50px')
+                    button.top = 123
+                    expect(_.domElement.style.top).toEqual('123px')
+                })
+            })
+
+            it('has a left property that sets css left', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.left).toEqual('50px')
+                    button.left = 123
+                    expect(_.domElement.style.left).toEqual('123px')
+                })
+            })
+
+            it('has a rotation property that sets transform', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.transform).toEqual('rotate(0deg)')
+                    button.rotation = 10
+                    expect(_.domElement.style.transform).toEqual('rotate(10deg)')
+                })
+            })
+
+            it('has a width property that sets css width', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.width).toEqual('100px')
+                    button.width = 123
+                    expect(_.domElement.style.width).toEqual('123px')
+                })
+            })
+
+            it('has a height property that sets css width', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.height).toEqual('50px')
+                    button.height = 123
+                    expect(_.domElement.style.height).toEqual('123px')
+                })
+            })
+
+            it('has a pivotX property that sets transform-origin', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.transformOrigin).toEqual('50% 50% 0px')
+                    button.pivotX = 0.9
+                    expect(_.domElement.style.transformOrigin).toEqual('90% 50% 0px')
+                })
+            })
+
+            it('has a pivotY property that sets transform-origin', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.transformOrigin).toEqual('50% 50% 0px')
+                    button.pivotY = 0.9
+                    expect(_.domElement.style.transformOrigin).toEqual('50% 90% 0px')
+                })
+            })
+
+            it('has a visible property that sets css display', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.display).toEqual('block')
+                    button.visible = false
+                    expect(_.domElement.style.display).toEqual('none')
+                })
+            })
+
+            it('has an imageUrl property that sets css background-image', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.backgroundImage).toEqual('none')
+                    button.imageUrl = 'http://example.com'
+                    expect(_.domElement.style.backgroundImage).toEqual('url(http://example.com/)')
+                })
+            })
+
+            it('has an imageResize property that sets css background-size', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.backgroundSize).toEqual('')
+                    button.imageResize = 'fit'
+                    expect(_.domElement.style.backgroundSize).toEqual('contain')
+                })
+            })
         })
     })
 })
 
-describe('Lantern Animations', function() {
-    beforeEach(function() { jasmine.clock().install() })
-    afterEach(function() { jasmine.clock().uninstall() })
+describe('Lantern.preloadResources', function() {
+    it('loads a list of image urls', function() {
+        var obtainedImages = []
 
+        Lantern.mod(function(_, $) {
+            spyOn($, 'obtainImage').and.callFake(function() {
+                var img = {onload: null}
+                obtainedImages.push(img)
+                return img
+            })
+        })
+
+        var resourceLoader = Lantern.preloadResources(
+            ['https://www.e.com/one.jpg',
+             'https://www.e.com/two.jpg'
+            ]
+        )
+
+        expect(obtainedImages[0].src).toEqual('https://www.e.com/one.jpg')
+        expect(obtainedImages[1].src).toEqual('https://www.e.com/two.jpg')
+
+        var doneLoading = false
+        resourceLoader.whenFinishedLoading(function() {
+            doneLoading = true
+        })
+
+        expect(doneLoading).toBe(false)
+        obtainedImages[1].onload()
+        expect(doneLoading).toBe(false)
+        obtainedImages[0].onload()
+        expect(doneLoading).toBe(true)
+    })
+})
+
+describe('Lantern Animations', function() {
     it('can animate an object property', function() {
-        var duck = {speed: 0}
-        $.startAnimation(duck, 'speed', 100, 40)
+        var duck = $.makeAnimatable({speed: 0})
+        duck.startAnimating('speed', 100, 0.5)
         expect(duck.speed).toEqual(0)
-        $.fireEvent('frame') // 10 ms elapsed
-        expect(duck.speed).toEqual(25)
-        $.fireEvent('frame'); $.fireEvent('frame') // 30 ms elapsed
-        expect(duck.speed).toEqual(75)
-        $.fireEvent('frame') // 40 ms elapsed
+        $.fireEvent('frame', {secondsSinceLastFrame: 0.25})
+        expect(duck.speed).toEqual(50)
+        $.fireEvent('frame', {secondsSinceLastFrame: 0.25})
         expect(duck.speed).toEqual(100)
-        $.fireEvent('frame') // 50 ms elapsed
+        $.fireEvent('frame', {secondsSinceLastFrame: 0.25})
         expect(duck.speed).toEqual(100)
     })
 

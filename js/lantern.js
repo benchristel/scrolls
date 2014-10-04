@@ -168,7 +168,8 @@ $.makeEvents = $.createModule(function(api, self) {
 $.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, self) {
   var props = self.propertyValues = {}
   self.defineProperty = function(name, value) {
-    props[name] = value
+    //props[name] = value
+    var setterName = 'set_'+name
     var descriptor =
         { enumerable:   true
         , configurable: false
@@ -176,10 +177,11 @@ $.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, self) {
         , set: function(newValue) {
             var oldValue = props[name]
             props[name] = newValue
-            $.call(self.fireEvent, ['propertyChanged', {property: name, oldValue: oldValue, newValue: newValue}])
+            self[setterName] && self[setterName](newValue, oldValue)
           }
         }
     Object.defineProperty(api, name, descriptor)
+    api[name] = value
   }
 })
 
@@ -289,13 +291,27 @@ Lantern.mod(function($, $internal) {
     , ACTUAL_SIZE: 'actualSize'
     }
 
+  var getBackgroundSize = function(imageResize) {
+    if (imageResize == $.IMAGE_RESIZE.ACTUAL_SIZE || self.imageResize == $.IMAGE_RESIZE.TILE)
+      return 'auto'
+    if (imageResize == $.IMAGE_RESIZE.FILL)
+      return 'cover'
+    if (imageResize == $.IMAGE_RESIZE.FIT)
+      return 'contain'
+    if (imageResize == $.IMAGE_RESIZE.STRETCH)
+      return '100% 100%'
+    //var allowedValues = []
+    //$.forAllPropertiesOf($.IMAGE_RESIZE, function(k,v) { allowedValues.push(v) })
+    //throw "Unrecognized value ("+self.imageResize+") for imageResize. Try one of these: "+allowedValues.join(", ")
+  }
+
   $.makeUiElement = $.createModule(
       $.makeEvents,
       $.makeConstants,
       $.makePositionable,
       $.makePropertyChangeEvents,
     function(api, self) {
-      self.domElement = document.createElement(api.tag || 'div') //addElement(api.tag)
+      self.domElement = document.createElement(api.tag || 'div')
 
       api.appendChild = function(childDomElement) {
         self.domElement.appendChild(childDomElement)
@@ -318,160 +334,96 @@ Lantern.mod(function($, $internal) {
         self.defineConstant
       )
 
-      self.setEventHandlers = function(attrs) {
-        var el = self.domElement
-        el.onclick     = function() { api.fireEvent('clicked') }
-        el.onmouseover = function() { api.fireEvent('mouseEnters') }
-        el.onmouseout  = function() { api.fireEvent('mouseLeaves') }
-        el.onmousemove = function() { api.fireEvent('mouseMoves') }
-        el.onkeydown   = function() { api.fireEvent('keyPressed') }
-
-        el.onkeyup = function() {
-          self.withoutRedrawing(function() {
-            api.fireEvent('inputMayHaveChanged')
-          })
-          api.fireEvent('keyReleased')
-          api.redraw()
-        }
-        el.onchange = function() {
-          self.withoutRedrawing(function() {
-            api.fireEvent('inputMayHaveChanged')
-          })
-          api.fireEvent('changed')
-          api.redraw()
-        }
+      var def = function(name, value, setter) {
+        self['set_'+name] = setter
+        self.defineProperty(name, value)
       }
-      self.setEventHandlers()
+      var el = self.domElement, style = el.style
+      el.onclick     = function() { api.fireEvent('clicked') }
+      el.onmouseover = function() { api.fireEvent('mouseEnters') }
+      el.onmouseout  = function() { api.fireEvent('mouseLeaves') }
+      el.onmousemove = function() { api.fireEvent('mouseMoves') }
+      el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
-      self.withoutRedrawing = function(fn) {
-        var old = api.redraw
-        api.redraw = $.noOp
-        fn()
-        api.redraw = old
+      //el.onkeyup = function() {
+      //  self.withoutRedrawing(function() {
+      //    api.fireEvent('inputMayHaveChanged')
+      //  })
+      //  api.fireEvent('keyReleased')
+      //  api.redraw()
+      //}
+      //el.onchange = function() {
+      //  self.withoutRedrawing(function() {
+      //    api.fireEvent('inputMayHaveChanged')
+      //  })
+      //  api.fireEvent('changed')
+      //  api.redraw()
+      //}
+
+      self.updateTransform = function() {
+        style.transform = "rotate("+self.rotation+"deg)" // translate("+toNumericString(self.left)+"px,"+toNumericString(self.top)+"px)"
       }
 
-      $.forAllPropertiesOf(
-        { id:   generateHtmlId()
-        , top:  0
-        , left: 0
-        , height: 50
-        , width:  100
-        , visible: true
-        , color: 'white'
-        , borderWidth: 1
-        , borderColor: 'lightGray'
-        , scrollable: false
-        , cursor: 'auto'
-        , imageUrl: null
-        , imageResize: $.IMAGE_RESIZE.ACTUAL_SIZE
-        , rotation: 0
-        , data: {} // this property is not used by Lantern; it's for the user to store their own data
-        },
-        self.defineProperty
-      )
-
-      api.redraw = function () {
-        self.setAttributes(self.htmlAttributes())
+      self.updateTransformOrigin = function() {
+        style.transformOrigin = toNumericString(self.pivotX * 100)+"% "+toNumericString(self.pivotY * 100)+"%"
       }
 
-      api.registerEventHandler('propertyChanged', function() { api.redraw() })
-
-      self.setAttributes = function(attrs) {
-        $.forAllPropertiesOf(attrs, function(name, value) {
-          self.domElement.setAttribute(name, value)
-        })
+      self.updateBackgroundImage = function() {
+        style.backgroundImage = (self.imageUrl ? "url("+self.imageUrl+")" : 'none')
+        style.backgroundRepeat = (self.imageResize == $.IMAGE_RESIZE.TILE ? 'repeat' : 'no-repeat')
+        style.backgroundSize = getBackgroundSize(self.imageResize)
+        style.backgroundPosition = 'center'
       }
 
-      self.htmlAttributes = function() {
-        return {
-          style: self.toCss()
-        , id: api.id
-        }
-      }
+      def('id',       generateHtmlId(), function(v) { el.id = v })
+      def('top',      50,  function(v) { style.top = toNumericString(v)+'px' })
+      def('left',     50,  function(v) { style.left = toNumericString(v)+'px' })
+      def('rotation', 0,   self.updateTransform)
+      def('pivotX',   0.5, self.updateTransformOrigin)
+      def('pivotY',   0.5, self.updateTransformOrigin)
+      def('height',   50,  function(v) { style.height = toNumericString(v)+'px' })
+      def('width',    100, function(v) { style.width = toNumericString(v)+'px' })
+      def('visible', true, function(v) { style.display = (v ? 'block' : 'none') })
+      def('color', 'white', function(v) { style.backgroundColor = v })
+      self.set_borderWidth = function(v) { style.borderWidth = toNumericString(v)+'px' }
+      def('borderWidth', 1)
+      self.set_borderColor = function(v) { style.borderColor = v }
+      def('borderColor', 'lightGray')
+      self.set_scrollable = function(v) { style.overflowY = (v ? 'auto' : 'hidden') }
+      def('scrollable', false)
+      self.set_cursor = function(v) { style.cursor = v }
+      def('cursor', 'auto')
+      def('imageUrl', null, self.updateBackgroundImage)
+      def('imageResize', null, self.updateBackgroundImage)
 
-      self.toCss = function() { return toCss(self.asCss()) }
-      self.asCss = function() {
-        var css =
-          { 'top'    : toNumericString(self.top)+'px'
-          , 'left'   : toNumericString(self.left)+'px'
-          , 'height' : toNumericString(self.height)+'px'
-          , 'width'  : toNumericString(self.width)+'px'
-          , 'color'  : self.textColor //$.COLOR[target.textColor]
-          , 'background-color' : self.color //$.COLOR[target.color]
-          , 'display' : (self.visible ? 'block' : 'none')
-          , 'border-color' : self.borderColor //$.COLOR[target.borderColor]
-          , 'border-width' : toNumericString(self.borderWidth)+'px'
-          , 'border-style' : 'solid'
-          , 'position' : 'absolute'
-          , 'font-size' : toNumericString(self.fontSize)+'px'
-          , 'white-space' : 'pre-wrap'
-          , 'overflow-x' : 'hidden'
-          , 'overflow-y' : (self.scrollable ? 'auto' : 'hidden')
-          , 'cursor' : self.cursor
-          , 'background-image' : self.imageUrl ? "url('"+self.imageUrl+"')" : 'none'
-          , 'background-size' : self.getBackgroundSize()
-          , 'background-repeat' : self.getBackgroundRepeat()
-          , 'background-position' : 'center'
-          , 'transform' : 'rotate('+(self.rotation||0)+'deg)'
-          }
-        return css
-      }
-
-      self.getBackgroundSize = function() {
-        if (self.imageResize == $.IMAGE_RESIZE.ACTUAL_SIZE || self.imageResize == $.IMAGE_RESIZE.TILE)
-          return 'auto'
-        if (self.imageResize == $.IMAGE_RESIZE.FILL)
-          return 'cover'
-        if (self.imageResize == $.IMAGE_RESIZE.FIT)
-          return 'contain'
-        if (self.imageResize == $.IMAGE_RESIZE.STRETCH)
-          return '100% 100%'
-        var allowedValues = []
-        $.forAllPropertiesOf($.IMAGE_RESIZE, function(k,v) { allowedValues.push(v) })
-        throw "Unrecognized value ("+self.imageResize+") for imageResize. Try one of these: "+allowedValues.join(", ")
-      }
-
-      self.getBackgroundRepeat = function() {
-        if (self.imageResize == $.IMAGE_RESIZE.TILE)
-          return 'repeat'
-        return 'no-repeat'
-      }
+      style.position = 'absolute'
     }
   )
 
   $internal.makeRelativePositionedElement = $.createModule(
     $.makeUiElement,
-    function(self, shared, inherited) {
-      shared.asCss = function() {
-        var css = inherited.asCss()
-        css.position = 'relative'
-        css['margin-left'] = 'auto'
-        css['margin-right'] = 'auto'
-        delete css.transform
-        return css
-      }
+    function(api, self, inherited) {
+      var style = self.domElement.style
+      style.position = 'relative'
+      style.marginLeft = 'auto'
+      style.marginRight = 'auto'
+      style.transform = null
+      //self.set_left = null
+      //self.set_top = function(v) { style.top = toNumericString(v)+'px' }
+      self.set_rotation = null
     }
   )
 
   $internal.makeTextContainerElement = $.createModule(
     $.makeUiElement,
     function(api, self, inherited) {
-      $.forAllPropertiesOf(
-        { text: ''
-        , fontSize: 20
-        , textColor: 'black'
-        },
-        self.defineProperty
-      )
-
-      api.redraw = function() {
-        inherited.redraw()
-        self.domElement.innerHTML = self.getDisplayText()
-      }
-
-      self.getDisplayText = function() {
-        return self.text
-      }
+      var el = self.domElement, style = self.domElement.style
+      self.set_text = function(v) { el.innerHTML = v }
+      self.defineProperty('text', '')
+      //self.set_fontSize = function(v) { style.fontSize = v })
+      self.defineProperty('fontSize', 20)
+      self.set_textColor = function(v) { style.color = v }
+      self.defineProperty('textColor', 'black')
     }
   )
 
@@ -479,24 +431,29 @@ Lantern.mod(function($, $internal) {
     var button = $internal.makeTextContainerElement({tag: 'button'})
     $internal.uiElements.push(button)
     button.appendTo($.portal)
-    button.redraw()
     return button
   }
 })
 
 Lantern.mod(function($, $shared) {
   $.portalize = function(container) {
-    $.background = $.makeUiElement().mod(function(self, shared, inherited) {
-      shared.asCss = function() {
-        var css = inherited.asCss()
-        delete css.height
-        css.width = '100%'
-        css.top = '0'
-        css.bottom = '0'
-        css.border = 'none'
-        return css
-      }
+    $.background = $.makeUiElement().mod(function(api, self, inherited) {
+      var style = self.domElement.style
+      self.set_height = null
+      style.height = null
+      self.set_width = null
+      style.width = '100%'
+      self.set_top = null
+      style.top = 0
+      self.set_left = null
+      style.left = 0
+      style.bottom = 0
+      style.transform = null
+      self.set_borderWidth = null
+      self.set_borderColor = null
+      style.border = 'none'
     })
+
     $.background.id = 'lantern-background'
     $.background.color = 'black'
 
@@ -514,6 +471,10 @@ Lantern.mod(function($, $shared) {
 
 Lantern.makeEvents(Lantern)
 
+/* ========= */
+/* ANIMATION */
+/* ========= */
+
 Lantern.mod(function($api, $) {
   var msPerFrame = 10
   var prevFrameTime = Date.now()
@@ -526,6 +487,23 @@ Lantern.mod(function($api, $) {
   var frameInterval = requestAnimationFrame(frameCallback)
 
   $api.everyFrame = $.registrarFor('frame')
+
+  $api.makeAnimatable = $.createModule(function(api, self) {
+    api.startAnimating = function(property, end, durationSeconds) {
+      var t = 0
+      var start = self[property]
+      var updateAnimation = function(event) {
+        t += event.secondsSinceLastFrame
+        if (t >= durationSeconds) {
+          api[property] = end
+          $.everyFrame.doNot(updateAnimation)
+        } else {
+          api[property] = start + (end - start) * t / durationSeconds
+        }
+      }
+      $.everyFrame(updateAnimation)
+    }
+  })
 
   $api.startAnimation = function(object, property, target, duration) {
     var from = object[property], to = target, elapsed = 0
@@ -561,6 +539,35 @@ Lantern.mod(function($api, $) {
     $.everyFrame(updateAnimation)
 
     return animator
+  }
+})
+
+/* ================ */
+/* RESOURCE LOADING */
+/* ================ */
+
+Lantern.mod(function ($api, $) {
+  $.obtainImage = function() {
+    return new Image()
+  }
+
+  $api.preloadResources = function(resourceUrls) {
+    var leftToLoad = resourceUrls.length
+    var preloader = $.makeEvents().mod(function(api, self) {
+      api.whenFinishedLoading = self.registrarFor('finishedLoading')
+    })
+
+    var loadOne = function() {
+      if(!--leftToLoad) preloader.fireEvent('finishedLoading')
+    }
+
+    $.forAll(resourceUrls, function(url) {
+      var img = $.obtainImage()
+      img.onload = loadOne
+      img.src = url
+    })
+
+    return preloader
   }
 })
 
