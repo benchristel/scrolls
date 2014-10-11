@@ -377,3 +377,18 @@ describe('Lantern Animations', function() {
         expect(done).toBe(true)
     })
 })
+
+describe('the Lantern portal', function() {
+    it('is relatively positioned', function() {
+        Lantern.portal.mod(function(_, portal) {
+            expect(portal.domElement.style.position).toEqual('relative')
+        })
+    })
+
+    it('has top = left = 0', function() {
+        Lantern.portal.mod(function(_, portal) {
+            expect(portal.domElement.style.top).toEqual('0px')
+            expect(portal.domElement.style.left).toEqual('0px')
+        })
+    })
+})
