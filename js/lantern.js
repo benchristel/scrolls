@@ -472,6 +472,27 @@ Lantern.mod(function($, $shared) {
 
 Lantern.makeEvents(Lantern)
 
+Lantern.mod(function($api, $) {
+  $api.whenPageLoaded = $.registrarFor('PageLoaded')
+  $api.whenKeyPressed = $.registrarFor('KeyPressed')
+
+  window.addEventListener('load', function(loadEvent) {
+    $.fireEvent('PageLoaded')
+  })
+
+  window.addEventListener('keydown', function(keyEvent) {
+    $.fireEvent('KeyPressed', {key: $.KEYS_BY_CODE[keyEvent.keyCode]})
+  })
+
+  $.KEYS_BY_CODE = {
+    27: 'esc', 192:'`', 49: '1', 50: '2', 51: '3', 52: '4', 53: '5', 54: '6', 55: '7', 56: '8', 57: '9', 48: '0', 189: '-', 187: '+',
+    81: 'q', 87: 'w', 69: 'e', 82: 'r', 84: 't', 89: 'y', 85: 'u', 73: 'i', 79: 'o', 80: 'p', 219: '[', 221: ']', 220: '\\',
+    65: 'a', 83: 's', 68: 'd', 70: 'f', 71: 'g', 72: 'h', 74: 'j', 75: 'k', 76: 'l', 186: ';', 222: "'",
+    90: 'z', 88: 'x', 67: 'c', 86: 'v', 66: 'b', 78: 'n', 77: 'm', 188: ',', 190: '.', 191: '/',
+    8: 'backspace', 13: 'return', 16: 'shift', 17:'control', 18:'alt', 91:'left meta', 93: 'right meta', 37:'left', 38:'up', 39:'right', 40:'down', 36: 'home', 46: 'delete', 33:'page up', 34:'page down', 35: 'end', 112: 'f1', 113: 'f2', 114: 'f3', 115: 'f4', 116: 'f5', 117: 'f6', 118: 'f7', 119: 'f8', 9: 'tab'
+  }
+})
+
 /* ========= */
 /* ANIMATION */
 /* ========= */
