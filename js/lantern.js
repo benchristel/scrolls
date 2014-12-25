@@ -58,6 +58,11 @@ Lantern.mod(function($) {
 // UTILITIES
 
 Lantern.mod(function($) {
+  var nextId = 0
+  var grantId = function(o) {
+    Object.defineProperty(o, '__id__', {configurable: false, enumerable: false, value: nextId++})
+  }
+
   // Value definition
   $.given   = function(val) { return val !== undefined }
   $.missing = function(val) { return val === undefined }
@@ -117,6 +122,78 @@ Lantern.mod(function($) {
       return fn.apply(null, args)
     }
   }
+
+  $.createArray = function() {
+    var len, array = new Array(len = arguments.length), i = 0
+    for (;i < len; i++) {
+      array[i] = arguments[i]
+    }
+    grantId(array)
+    return array
+  }
+
+  $.createStatBlock = function() {
+    var obj = {}, i = 0, len = arguments.length
+    for (;i < len; i++) {
+      obj[arguments[i]] = null
+    }
+    grantId(obj)
+    return obj
+  }
+
+  $.createSet = function() {
+    var api = $.createStatBlock('size', 'add', 'remove'), container = {}, listContainer = [], size = 0, i
+
+    Object.defineProperty(api, 'size', {set: $.noOp, get: function() { return size }, configurable: false, enumerable: false})
+
+    api.add = function(item) {
+      var currentValue, id
+
+      if (item && (id = item.__id__)) {
+        currentValue = container[id]
+        if (!currentValue) {
+          size++
+          container[id] = item
+        }
+      } else if (listContainer.indexOf(item) === -1) {
+        listContainer.push(item)
+        size++
+      }
+    }
+
+    api.contains = function(item) {
+      return (item && (item.__id__ in container)) ||
+             (listContainer.indexOf(item) > -1)
+    }
+
+    api.remove = function(item) {
+      if (item && container[item.__id__]) {
+        delete container[item.__id__]
+        size--
+        return item
+      } else if (listContainer.indexOf(item) > -1) {
+        $.remove(item, listContainer)
+        size--
+        return item
+      } // else return undefined
+    }
+
+    api.forEach = function(fn) {
+      var i = 0, id, k
+      for(id in container) {
+        fn(container[id], i++)
+      }
+      for(k = 0; k < listContainer.length; k++) {
+        fn(listContainer[k], i++)
+      }
+    }
+
+    for(i = 0; i < arguments.length; i++) {
+      api.add(arguments[i])
+    }
+
+    return api
+  }
 })
 
 // EVENT DISPATCH
@@ -163,9 +240,13 @@ $.makeEvents = $.createModule(function(api, self) {
   }
 })
 
-// PROPERTIES
+Lantern.makeEvents(Lantern)
 
-$.makePropertyChangeEvents = $.createModule($.makeEvents, function(api, self) {
+/*
+ * PROPERTIES
+ */
+
+$.makeConfiguredProperties = $.createModule($.makeEvents, function(api, self) {
   var props = self.propertyValues = {}
   self.defineProperty = function(name, value) {
     //props[name] = value
@@ -309,7 +390,7 @@ Lantern.mod(function($, $internal) {
       $.makeEvents,
       $.makeConstants,
       $.makePositionable,
-      $.makePropertyChangeEvents,
+      $.makeConfiguredProperties,
     function(api, self) {
       self.domElement = document.createElement(api.tag || 'div')
 
@@ -345,21 +426,6 @@ Lantern.mod(function($, $internal) {
       el.onmousemove = function() { api.fireEvent('mouseMoves') }
       el.onkeydown   = function() { api.fireEvent('keyPressed') }
 
-      //el.onkeyup = function() {
-      //  self.withoutRedrawing(function() {
-      //    api.fireEvent('inputMayHaveChanged')
-      //  })
-      //  api.fireEvent('keyReleased')
-      //  api.redraw()
-      //}
-      //el.onchange = function() {
-      //  self.withoutRedrawing(function() {
-      //    api.fireEvent('inputMayHaveChanged')
-      //  })
-      //  api.fireEvent('changed')
-      //  api.redraw()
-      //}
-
       self.updateTransform = function() {
         style.transform = "rotate("+self.rotation+"deg)" // translate("+toNumericString(self.left)+"px,"+toNumericString(self.top)+"px)"
       }
@@ -385,8 +451,7 @@ Lantern.mod(function($, $internal) {
       def('width',    100, function(v) { style.width = toNumericString(v)+'px' })
       def('visible', true, function(v) { style.display = (v ? 'block' : 'none') })
       def('color', 'white', function(v) { style.backgroundColor = v })
-      self.set_borderWidth = function(v) { style.borderWidth = toNumericString(v)+'px' }
-      def('borderWidth', 1)
+      def('borderWidth', 1, function(v) { style.borderWidth = toNumericString(v)+'px' })
       self.set_borderColor = function(v) { style.borderColor = v }
       def('borderColor', 'lightGray')
       self.set_scrollable = function(v) { style.overflowY = (v ? 'auto' : 'hidden') }
@@ -394,9 +459,33 @@ Lantern.mod(function($, $internal) {
       self.set_cursor = function(v) { style.cursor = v }
       def('cursor', 'auto')
       def('imageUrl', null, self.updateBackgroundImage)
-      def('imageResize', null, self.updateBackgroundImage)
+      def('imageResize', $.IMAGE_RESIZE.FIT, self.updateBackgroundImage)
+      def('zIndex', 1, function(v) { style.zIndex = Math.floor(v) } )
 
       style.position = 'absolute'
+
+      self.restoreFactoryDefaults = function() {
+        self.whenClicked.doNothing()
+        self.whenMouseEnters.doNothing()
+        self.whenMouseLeaves.doNothing()
+        self.whenMouseMoves.doNothing()
+        self.whenKeyPressed.doNothing()
+        self.whenKeyReleased.doNothing()
+        self.whenInputChanged.doNothing()
+
+        self.visible = true
+      }
+
+      api.destroy = function() {
+        api.__tombstone__ = true
+        self.visible = false
+      }
+
+      api.restore = function() {
+        if ( ! self.__tombstone__) return
+        api.__tombstone__ = null
+        self.restoreFactoryDefaults()
+      }
     }
   )
 
@@ -407,10 +496,6 @@ Lantern.mod(function($, $internal) {
       style.position = 'relative'
       style.marginLeft = 'auto'
       style.marginRight = 'auto'
-      style.transform = null
-      //self.set_left = null
-      //self.set_top = function(v) { style.top = toNumericString(v)+'px' }
-      self.set_rotation = null
     }
   )
 
@@ -420,7 +505,7 @@ Lantern.mod(function($, $internal) {
       var el = self.domElement, style = self.domElement.style
       self.set_text = function(v) { el.innerHTML = v }
       self.defineProperty('text', '')
-      //self.set_fontSize = function(v) { style.fontSize = v })
+      self.set_fontSize = function(v) { style.fontSize = String(v)+'px' }
       self.defineProperty('fontSize', 20)
       self.set_textColor = function(v) { style.color = v }
       self.defineProperty('textColor', 'black')
@@ -470,27 +555,49 @@ Lantern.mod(function($, $shared) {
   }
 })
 
-Lantern.makeEvents(Lantern)
+
 
 Lantern.mod(function($api, $) {
-  $api.whenPageLoaded = $.registrarFor('PageLoaded')
-  $api.whenKeyPressed = $.registrarFor('KeyPressed')
+  var HELD_KEYS = {}
 
-  window.addEventListener('load', function(loadEvent) {
-    $.fireEvent('PageLoaded')
-  })
-
-  window.addEventListener('keydown', function(keyEvent) {
-    $.fireEvent('KeyPressed', {key: $.KEYS_BY_CODE[keyEvent.keyCode]})
-  })
-
-  $.KEYS_BY_CODE = {
+  var KEYS_BY_CODE = {
     27: 'esc', 192:'`', 49: '1', 50: '2', 51: '3', 52: '4', 53: '5', 54: '6', 55: '7', 56: '8', 57: '9', 48: '0', 189: '-', 187: '+',
     81: 'q', 87: 'w', 69: 'e', 82: 'r', 84: 't', 89: 'y', 85: 'u', 73: 'i', 79: 'o', 80: 'p', 219: '[', 221: ']', 220: '\\',
     65: 'a', 83: 's', 68: 'd', 70: 'f', 71: 'g', 72: 'h', 74: 'j', 75: 'k', 76: 'l', 186: ';', 222: "'",
     90: 'z', 88: 'x', 67: 'c', 86: 'v', 66: 'b', 78: 'n', 77: 'm', 188: ',', 190: '.', 191: '/',
     8: 'backspace', 13: 'return', 16: 'shift', 17:'control', 18:'alt', 91:'left meta', 93: 'right meta', 37:'left', 38:'up', 39:'right', 40:'down', 36: 'home', 46: 'delete', 33:'page up', 34:'page down', 35: 'end', 112: 'f1', 113: 'f2', 114: 'f3', 115: 'f4', 116: 'f5', 117: 'f6', 118: 'f7', 119: 'f8', 9: 'tab'
   }
+
+  $api.whenPageLoaded = $.registrarFor('PageLoaded')
+  $api.whenKeyPressed = $.registrarFor('KeyPressed')
+  $api.whenKeyReleased = $.registrarFor('KeyReleased')
+
+  $api.isKeyHeld = function(keyName) {
+    return !!HELD_KEYS[keyName]
+  }
+
+  window.addEventListener('load', function(loadEvent) {
+    $.fireEvent('PageLoaded')
+  })
+
+  window.addEventListener('keydown', function(keyEvent) {
+    var keyName = KEYS_BY_CODE[keyEvent.keyCode]
+    console.log("down "+keyName)
+
+    if (!HELD_KEYS[keyName]) {
+      HELD_KEYS[keyName] = true
+      $.fireEvent('KeyPressed', {key: keyName})
+    }
+  })
+
+  window.addEventListener('keyup', function(keyEvent) {
+    var keyName = KEYS_BY_CODE[keyEvent.keyCode]
+
+    if (HELD_KEYS[keyName]) {
+      HELD_KEYS[keyName] = false
+      $.fireEvent('KeyReleased', {key: keyName})
+    }
+  })
 })
 
 /* ========= */
@@ -592,6 +699,52 @@ Lantern.mod(function ($api, $) {
     return preloader
   }
 })
+
+/* ================ */
+/* OBJECT RECYCLING */
+/* ================ */
+
+Lantern.mod(function($api, $) {
+  $.legions = []
+
+  $api.Legion = function() {
+    var legionApi = {}, instances = [], tombstones = []
+
+    legionApi.all = function(fn) {
+      var i, inst
+      for(i = 0; i < instances.length; i++) {
+        inst = instances[i]
+        if ( ! inst.__tombstone__) fn(inst)
+      }
+    }
+
+    var makeMember = $.createModule(function(api, self, inherited) {
+      api.destroy = function() {
+        if ( ! api.__tombstone__) {
+          inherited.destroy()
+          tombstones.push(api)
+        }
+      }
+    })
+
+    legionApi.create = function() {
+      var instance = tombstones.pop()
+      if ( ! instance) {
+        instance = $.createButton()
+        makeMember(instance)
+        instances.push(instance)
+      } else {
+        instance.restore()
+      }
+      $.call(legionApi.builder, [instance])
+      return instance
+    }
+
+    return legionApi
+  }
+})
+
+
 
 Lantern.$noConflict = $
 var $ = Lantern

@@ -205,4 +205,213 @@ describe("Lantern utilities", function() {
             expect($.call(1)).toBe(undefined)
         })
     })
+
+    describe(".createArray", function() {
+        it("has an __id__ property", function() {
+            expect($.createArray().__id__).not.toEqual(undefined)
+        })
+
+        describe("given no arguments", function() {
+            it("returns an empty array", function() {
+                var subject = $.createArray()
+                expect(subject instanceof Array).toBe(true)
+                expect(subject.length).toBe(0)
+            })
+        })
+
+        describe("given arguments", function() {
+            it("returns an array of the arguments", function() {
+                expect($.createArray(34, 'lamb', 'chops')).toEqual([34, 'lamb', 'chops'])
+            })
+        })
+    })
+
+    describe(".createStatBlock", function() {
+        it("has an __id__ property", function() {
+            expect($.createStatBlock().__id__).not.toEqual(undefined)
+        })
+
+        describe("given no arguments", function() {
+            it("returns an empty object", function() {
+                expect($.createStatBlock()).toEqual({})
+            })
+        })
+
+        describe("given arguments", function() {
+            it("returns an object with the arguments as keys", function() {
+                expect($.createStatBlock('str', 'dex', 'con', 'int', 'wis', 'cha')).toEqual({str: null, dex: null, con: null, int: null, wis: null, cha: null})
+            })
+        })
+    })
+
+    describe(".createSet", function() {
+        var set, item
+
+        beforeEach(function() {
+            set = $.createSet()
+            item = $.createStatBlock()
+        })
+
+        describe("given no arguments", function() {
+            it("returns a set with size = 0", function() {
+                expect($.createSet().size).toEqual(0)
+            })
+        })
+
+        describe("given 5 arguments", function() {
+            it("returns a set with size = 5", function() {
+                set = $.createSet('hello', 3, null, item, true)
+                expect(set.size).toEqual(5)
+            })
+
+            it("returns a set containing each of the arguments", function() {
+                set = $.createSet('hello', 3, null, item, true)
+                expect(set.contains('hello')).toEqual(true)
+                expect(set.contains(3)).toEqual(true)
+                expect(set.contains('3')).toEqual(false)
+                expect(set.contains(null)).toEqual(true)
+                expect(set.contains(item)).toEqual(true)
+                expect(set.contains(true)).toEqual(true)
+            })
+        })
+
+        it('has a size property that cannot be changed by meddling metalhands', function() {
+            expect(set.size).toEqual(0)
+            set.size = 1
+            expect(set.size).toEqual(0)
+        })
+
+        describe("adding a stat block to the set", function() {
+            it('increases the size of the set by 1', function() {
+                expect(set.size).toEqual(0)
+                set.add($.createStatBlock())
+                expect(set.size).toEqual(1)
+            })
+
+            describe("when the set already contains it", function() {
+                it("does not change the count", function() {
+                    set.add(item)
+                    set.add(item)
+                    expect(set.size).toEqual(1)
+                })
+
+                it("does not add duplicate items to the set", function() {
+                    var yielded = []
+                    var indices = []
+
+                    set.add(item)
+                    set.add(item)
+
+                    set.forEach(function(it, i) { yielded.push(it); indices.push(i) })
+                    expect(yielded).toEqual([item])
+                    expect(indices).toEqual([0])
+                })
+            })
+
+            it('makes the set contain the item', function() {
+                expect(set.contains(item)).toBe(false)
+                set.add(item)
+                expect(set.contains(item)).toBe(true)
+            })
+
+            it('makes iterating over the set yield the item', function() {
+                var yielded = [], indices = []
+                set.forEach(function(it) { yielded.push(it) })
+                expect(yielded).toEqual([])
+
+                set.add(item)
+
+                set.forEach(function(it, i) { yielded.push(it); indices.push(i) })
+                expect(yielded).toEqual([item])
+                expect(indices).toEqual([0])
+            })
+        })
+
+        describe("removing a stat block from the set", function() {
+            it("decreases the count by 1", function() {
+                set.add(item)
+                expect(set.size).toEqual(1)
+                set.remove(item)
+                expect(set.size).toEqual(0)
+            })
+
+            it("returns the item if the set contained it", function() {
+                set.add(item)
+                expect(set.remove(item)).toBe(item)
+            })
+
+            it('returns undefined if the set did not contain the item', function() {
+                expect(set.remove(item)).toBe(undefined)
+            })
+        })
+
+        describe("adding a thing with no __id__ property to the set", function() {
+            var number = 0, string = "hello"
+            beforeEach(function() {
+                item = number
+            })
+
+            it('increases the size of the set by 1', function() {
+                expect(set.size).toEqual(0)
+                set.add($.createStatBlock())
+                expect(set.size).toEqual(1)
+            })
+
+            describe("when the set already contains it", function() {
+                it("does not change the count", function() {
+                    set.add(item)
+                    set.add(item)
+                    expect(set.size).toEqual(1)
+                })
+
+                it("does not add duplicate items to the set", function() {
+                    var yielded = []
+                    var indices = []
+
+                    set.add(item)
+                    set.add(item)
+
+                    set.forEach(function(it, i) { yielded.push(it); indices.push(i) })
+                    expect(yielded).toEqual([item])
+                    expect(indices).toEqual([0])
+                })
+            })
+
+            it('makes the set contain the item', function() {
+                expect(set.contains(item)).toBe(false)
+                set.add(item)
+                expect(set.contains(item)).toBe(true)
+            })
+
+            it('makes iterating over the set yield the item', function() {
+                var yielded = [], indices = []
+                set.forEach(function(it) { yielded.push(it) })
+                expect(yielded).toEqual([])
+
+                set.add(item)
+
+                set.forEach(function(it, i) { yielded.push(it); indices.push(i) })
+                expect(yielded).toEqual([item])
+                expect(indices).toEqual([0])
+            })
+        })
+
+        describe("removing a thing with no __id__ from the set", function() {
+            it("decreases the count by 1", function() {
+                set.add(0)
+                expect(set.size).toEqual(1)
+                set.remove(0)
+                expect(set.size).toEqual(0)
+            })
+
+            it("returns the item if the set contained it", function() {
+                set.add(false)
+                expect(set.remove(false)).toBe(false)
+            })
+
+            it('returns undefined if the set did not contain the item', function() {
+                expect(set.remove("not there")).toBe(undefined)
+            })
+        })
+    })
 })

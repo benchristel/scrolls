@@ -4,13 +4,13 @@ var any = jasmine.any
 var they = it
 
 describe("Lantern modules", function() {
-    describe(".makePropertyChangeEvents", function() {
+    describe(".makeConfiguredProperties", function() {
         it("adds a private method defineProperty to the given object", function() {
             var obj = $.makeObject()
             obj.mod(function(self, _self) {
                 expect(_self.defineProperty).toBe(undefined)
             })
-            $.makePropertyChangeEvents(obj)
+            $.makeConfiguredProperties(obj)
             obj.mod(function(self, _self) {
                 expect(typeof _self.defineProperty).toEqual('function')
             })
@@ -18,7 +18,7 @@ describe("Lantern modules", function() {
 
         describe("the defined properties", function() {
             they("are settable and gettable", function() {
-                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
+                var obj = $.makeConfiguredProperties(Lantern.makeObject())
 
                 obj.mod(function(published, self) {
                     self.defineProperty('foo', 1)
@@ -33,7 +33,7 @@ describe("Lantern modules", function() {
             })
 
             they("are public regardless of whether they are set on the published or shared facet", function() {
-                var obj = $.makePropertyChangeEvents(Lantern.makeObject())
+                var obj = $.makeConfiguredProperties(Lantern.makeObject())
 
                 obj.mod(function(pub, self) {
                     self.defineProperty('a', 'a1')
@@ -311,9 +311,33 @@ describe('Lantern UI', function() {
 
             it('has an imageResize property that sets css background-size', function() {
                 Lantern.createButton().mod(function(button, _) {
-                    expect(_.domElement.style.backgroundSize).toEqual('')
-                    button.imageResize = 'fit'
                     expect(_.domElement.style.backgroundSize).toEqual('contain')
+                    button.imageResize = 'fill'
+                    expect(_.domElement.style.backgroundSize).toEqual('cover')
+                })
+            })
+
+            it('has a borderWidth property that sets css border-width', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.borderWidth).toEqual('1px')
+                    button.borderWidth = 11
+                    expect(_.domElement.style.borderWidth).toEqual('11px')
+                })
+            })
+
+            it('has a zIndex property that sets css z-index to an integer', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.zIndex).toEqual('1')
+                    button.zIndex = 1000.12345
+                    expect(_.domElement.style.zIndex).toEqual('1000')
+                })
+            })
+
+            it('has a fontSize property that sets CSS font size', function() {
+                Lantern.createButton().mod(function(button, _) {
+                    expect(_.domElement.style.fontSize).toEqual('20px')
+                    button.fontSize = 16
+                    expect(_.domElement.style.fontSize).toEqual('16px')
                 })
             })
         })
