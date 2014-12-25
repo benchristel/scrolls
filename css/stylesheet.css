@@ -455,6 +455,7 @@ a.site-title {
   margin-left: 0;
   padding-left: 0;
   list-style: none;
+  white-space: nowrap;
 }
 
 .highlight {
