@@ -521,32 +521,33 @@ Lantern.mod(function($, $internal) {
 })
 
 Lantern.mod(function($, $shared) {
+  $.background = $.makeUiElement().mod(function(api, self, inherited) {
+    var style = self.domElement.style
+    self.set_height = null
+    style.height = null
+    self.set_width = null
+    style.width = '100%'
+    self.set_top = null
+    style.top = 0
+    self.set_left = null
+    style.left = 0
+    style.bottom = 0
+    style.transform = null
+    self.set_borderWidth = null
+    self.set_borderColor = null
+    style.border = 'none'
+  })
+
+  $.background.id = 'lantern-background'
+  $.background.color = 'black'
+
+  $.portal = $shared.makeRelativePositionedElement()
+  $.portal.id = 'lantern-portal'
+  $.portal.borderWidth = 0
+  $.portal.top = $.portal.left = 0
+  $.portal.appendTo($.background)
+
   $.portalize = function(container) {
-    $.background = $.makeUiElement().mod(function(api, self, inherited) {
-      var style = self.domElement.style
-      self.set_height = null
-      style.height = null
-      self.set_width = null
-      style.width = '100%'
-      self.set_top = null
-      style.top = 0
-      self.set_left = null
-      style.left = 0
-      style.bottom = 0
-      style.transform = null
-      self.set_borderWidth = null
-      self.set_borderColor = null
-      style.border = 'none'
-    })
-
-    $.background.id = 'lantern-background'
-    $.background.color = 'black'
-
-    $.portal = $shared.makeRelativePositionedElement()
-    $.portal.id = 'lantern-portal'
-    $.portal.borderWidth = 0
-    $.portal.top = $.portal.left = 0
-    $.portal.appendTo($.background)
     $.background.appendTo(container)
 
     $.forAll($shared.uiElements, function(elem) {
